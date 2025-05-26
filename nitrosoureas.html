@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nitrosoureas</title>
+    <style>
+         .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #1a2980;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+        
+        .sidebar-toggle-icon {
+            font-size: 20px;
+            color: white;
+        }
+        
+        /* WHITE SIDEBAR STYLES */
+        .sidebar {
+            width: 280px;
+            background: white;
+            color: #333;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 999;
+            left: -280px;
+            top: 0;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.05);
+            border-right: 1px solid #eee;
+        }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .sidebar h2 {
+            color: #1a2980;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.5rem;
+        }
+        
+        /* NAVIGATION LINKS */
+        .nav-links {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .nav-links li {
+            margin-bottom: 10px;
+        }
+        
+        .nav-links a {
+            color: #555;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* SUBMENU STYLES */
+        .sub-links {
+            list-style: none;
+            padding-left: 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .has-submenu.active .sub-links {
+            max-height: 500px;
+        }
+
+        .sub-links a {
+            padding: 8px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        
+        .sub-links a:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sub-links.active {
+            display: block;
+        }
+
+        .has-submenu {
+            position: relative;
+        }
+
+        .has-submenu::after {
+            content: '▼';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            transition: transform 0.3s ease;
+        }
+
+        .has-submenu.active::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+        width: 100%;
+        height: 100%;
+        font-family: 'Arial', sans-serif;
+        color: #333;
+        line-height: 1.6;
+        scroll-behavior: smooth;
+        background: #f5f7fa;
+        }
+
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+            margin: 0;
+        }
+
+        .scene {
+            min-height: auto;
+            height:auto;
+            padding: 80px 40px;
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            max-width: 1000px;
+            margin: 60px auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        .header {
+            text-align: center;
+            padding: 80px 20px 60px;
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            color: white;
+            position: relative;
+            z-index: 10;
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+            margin-bottom: -30px;
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+            }
+            
+            .sidebar-expanded .main-content {
+                position: fixed;
+                left: 250px;
+                width: 100%;
+            }
+            
+            .sidebar-expanded::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 250px;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 998;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                padding: 60px 20px 40px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .team-members {
+                padding: 20px;
+                margin-bottom: 40px;
+            }
+            
+            .scene {
+                padding: 40px 20px;
+                margin: 30px auto;
+            }
+            
+            .scene h2 {
+                font-size: 1.5rem;
+            }
+            
+            .battlefield, .lab, .dna-animation, .treatment-scene {
+                height: 280px;
+            }
+            
+            .drug-types {
+                gap: 15px;
+            }
+            
+            .drug-card {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .drug-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .drug-card h4 {
+                font-size: 16px;
+                margin: 10px 0 5px;
+            }
+            
+            .chemical-structure {
+                height: 120px;
+                margin: 30px 0;
+            }
+            
+            .footer {
+                padding: 60px 20px;
+            }
+            
+            .footer p {
+                font-size: 1.1rem;
+            }
+        }
+
+        .drug-card {
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .drug-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .drug-card-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .animation-tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 13px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+            z-index: 10000;
+            white-space: nowrap;
+            transform: translate(-50%, -110%);
+        }
+
+        .key-points, .activation-pathway {
+            background: rgba(245, 245, 245, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #1a2980;
+        }
+
+        .comparison-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .comparison-table th {
+            background-color: #1a2980;
+            color: white;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .molecular-detail {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        @keyframes highlight {
+            from { background-color: rgba(100, 200, 255, 0.3); }
+            to { background-color: transparent; }
+        }
+
+        :target {
+            animation: highlight 2s ease;
+        }
+
+
+
+.scene.chemistry-theme {
+            width: 100%;
+            padding: 2rem;
+            background: 
+                url('https://www.transparenttextures.com/patterns/hexellence.png') repeat,
+                linear-gradient(135deg, #f0f8ff 0%, #e0f7fa 100%);
+            background-blend-mode: overlay;
+            box-shadow: inset 0 0 0 1000px rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border-top: 6px solid #4db6ac;
+            border-bottom: 6px solid #4db6ac;
+            box-sizing: border-box;
+
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center; /* ✅ Center content vertically */
+            justify-content: center;
+        }
+
+        .source-caption {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 1.5rem;
+        }
+
+        .main-caption {
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #00796b;
+            margin-top: 1rem;
+        }
+
+    img {
+      cursor: pointer;
+      max-width: 200px;
+    }
+        #img2 {
+      display: none;
+      margin-top: 10px;
+    }
+
+    img {
+      cursor: pointer;
+      max-width: 200px;
+    }
+
+    .scene img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+        .navigation-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .navigation-buttons button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .navigation-buttons button:nth-child(1),
+    .navigation-buttons button:nth-child(2) {
+        background: linear-gradient(135deg, #1a2980, #26d0ce);
+        color: white;
+    }
+    
+    .navigation-buttons button:last-child {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b);
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .navigation-buttons button:last-child::after {
+        content: '↻';
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 18px;
+    }
+    
+    .navigation-buttons button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    
+    .navigation-buttons button:active {
+        transform: translateY(1px);
+    }
+    
+    .navigation-buttons button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .mechanism-visualization {
+            height: 400px;
+            position: relative;
+            margin: 30px 0;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            border: 1px solid #eee;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        
+        .mechanism-visualization::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="1" height="1" fill="%23eee"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .molecule-label {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+        
+        .dna-strand {
+            position: absolute;
+            width: 300px;
+            height: 60px;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            border-radius: 30px;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        
+        .blood-brain-barrier {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: #1a2980;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            opacity: 0.7;
+        }
+
+        .mechanism-flex {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        .mechanism-visualization {
+            min-width: 780px;
+            min-height: 400px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            border: 1px solid #eee;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .legend {
+            min-width: 190px;
+            padding: 18px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 4px #0001;
+            font-size: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 9px;
+        }
+        .legend-color {
+            width: 19px;
+            height: 19px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #bbb;
+        }
+        @media (max-width: 900px) {
+            .mechanism-flex { flex-direction: column; align-items: center; gap: 14px; }
+            .mechanism-visualization, .legend { min-width: 0; width: 95vw; max-width: 780px;}
+        }
+        .explanation-box {
+            margin-top: 18px;
+            background: #f7f7fa;
+            border-radius: 10px;
+            padding: 20px 24px;
+            border-left: 5px solid #1976d2;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .navigation-buttons button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            color: white;
+        }
+        .navigation-buttons button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .navigation-buttons button:last-child {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+        }
+        .navigation-buttons button:last-child::after {
+            content: '↻';
+            margin-left: 10px;
+            font-size: 18px;
+        }
+
+
+    </style>
+</head>
+
+<body>
+        <!-- Sidebar Toggle Button -->
+    <div class="sidebar-toggle" id="sidebarToggle">
+        <span class="sidebar-toggle-icon">☰</span>
+    </div>
+
+    <div class="sidebar">
+        <h2>Navigation</h2>
+        <ul class="nav-links">
+            <li><a href="historical.html">Warhead and Wonder drugs</a></li>
+            <li><a href="mechanism.html">Cellular blueprints</a></li>
+            <li class="has-submenu">
+                <a href="agents.html">Weapons of the cell war</a>
+                <ul class="sub-links">
+                  <li><a href="agents.html">Summary</a></li>
+                  <li><a href="nitrogen-mustards.html">Nitrogen Mustards</a></li>
+                  <li><a href="oxazaphosphorines.html">Oxazaphosphorines</a></li>
+                  <li><a href="nitrosoureas.html">Nitrosourea</a></li>
+                  <li><a href="mitomycin-c.html">Mitomycin C</a></li>
+                </ul>
+              </li>
+            <li><a href="references.html">References</a></li>
+            <li><a href="index.html">Authors</a></li>
+        </ul>
+    </div>
+
+
+    <div class="header">
+        <h1>From Mustard Gas to Chemotherapy</h1>
+        <p>From chemical warfare to cancer cure, the alchemical evolution of chemotherapy drugs</p>
+    </div>
+
+    <div class="scene" id = "name">
+        <h2>Nitrosourea</h2>
+
+    </div>
+
+    <div class="scene chemistry-theme">
+        <figure>
+
+            <img src="https://www.researchgate.net/publication/383912937/figure/fig39/AS:11431281280620803@1727459245781/DNA-cross-linking-by-nitrosoureas.tif" alt="Nitrosoureas process">
+            <figcaption class="main-caption">Nitrosoureas Activation Pathway</figcaption>
+            <figcaption class="source-caption">
+                <i>Credit to Author Unknown. (n.d.). [Image of DNA cross-linking by nitrosoureas]. ResearchGate. </i>
+    
+            </figcaption>
+        </figure>
+    </div>
+
+    <div class="scene chemistry-theme">
+        <figure>
+
+            <img id="img1" src="nitrosoureas1.png" alt="Nitrosoureas 1">
+            <img id="img2" src="nitrosoureas2.png" alt="Nitrosoureas 2">
+            <figcaption class="main-caption">Nitrogen Mustard Activation Pathway</figcaption>
+            <figcaption class="source-caption">
+                <i>Credit to Vaccinationist. (2016, Agustus 31). Nitrosourea.svg [Gambar]. Wikimedia Commons./i>
+    
+            </figcaption>
+        </figure>
+    </div>
+
+    <div class="scene chemistry-theme">
+        <figure>
+
+            <img src="nitrosoureas-decomposition.png" alt="Nitrosoureas Decomposition">
+            <!--<figcaption class="main-caption">Nitrogen Mustard Activation Pathway</figcaption>-->
+            <figcaption class="source-caption">
+                <i>Credit to Weller, M., & Le Rhun, E. (2020). Chemical structure and major mode of action of the nitrosourea lomustine [Figure 1]. In How did lomustine become standard of care in recurrent glioblastoma? Cancer Treatment Reviews, 87, 102029. </i>
+    
+            </figcaption>
+        </figure>
+        <p class="description">
+            <ul>
+                <li>Nitrosoureas, upon decomposition, will release another compound known as isocyanate. The <strong>isocyanate group</strong> although not responsible for alkylation, has a crucial role in further preventing DNA replication.</li>
+    
+                <li>It will inhibit DNA repair or replication enzymes (<strong>Carbamoylation</strong>) such as the α-Polymerase, Poly-adenosine diphosphate-Ribose and O6-Methylguanine - <strong>DNA Methyltransferase</strong></li>
+
+                <li>Reduces the repair of the damaged DNA structure, allowing alkylation effects to pile on
+                </li>
+                
+                </ul>
+        </p>
+    </div>
+
+    <div class="scene chemistry-theme">
+        <figure>
+
+            <img src="nitrosoureas-medicine.png" alt="Nitrosoureas Medicine">
+            <!--<figcaption class="main-caption">Nitrogen Mustard Activation Pathway</figcaption>-->
+            <figcaption class="source-caption">
+                <i>Credit to Rizochem. (2023). [Image of Rizochem pharmaceutical product]. </i>
+                <i>Credit toDr. Reddy's Direct. (n.d.). [Image of Carmustine 100mg vial].</i>
+
+            </figcaption>
+        </figure>
+        <p class="description">
+            <ul>
+                <li>Nitrosourea-class drugs such as Lomustine, Carmustine and Nimustine
+                </li>
+    
+                <li>It will inhibit DNA repair or replication enzymes (<strong>Carbamoylation</strong>) such as the α-Polymerase, Poly-adenosine diphosphate-Ribose and O6-Methylguanine - <strong>DNA Methyltransferase</strong></li>
+
+                <li>Nitrosoureas are the most commonly used chemotherapeutic agents that targets brain tumors, lung tumors, pancreatic islet cell tumors, Hodgkin disease and many more.
+
+                </li>
+                
+                </ul>
+        </p>
+        <div class="scene" id="nitrosourea-mechanism">
+            <h2>Nitrosourea Animation</h2>
+            <div class="mechanism-flex">
+                <div class="mechanism-visualization">
+                    <svg id="nu-animation" width="780" height="400" viewBox="0 0 780 400"></svg>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: #007bff;"></div><span>5'-3' Backbone (Blue)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #dc3545;"></div><span>3'-5' Backbone (Red)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #F08080;"></div><span>Adenine (A)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #F5D67D;"></div><span>Thymine (T)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #58D68D;"></div><span>Guanine (G)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #5DADE2;"></div><span>Cytosine (C)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #BDC3C7;"></div><span>Hydrogen Bonds</span></div>
+                </div>
+            </div>
+            <div class="explanation-box">
+                <h3 id="nu-step-title">Nitrosourea: Step 1</h3>
+                <p class="explanation-text" id="nu-explanation"></p>
+            </div>
+            <div class="navigation-buttons">
+                <button id="nu-prev-btn">Previous</button>
+                <button id="nu-next-btn">Next</button>
+                <button id="nu-restart-btn">Restart</button>
+            </div>
+        </div>
+        <div class="scene" id="nitrosourea-mechanism">
+            <h2>Nitrosourea Animation</h2>
+            <div class="mechanism-flex">
+                <div class="mechanism-visualization">
+                    <svg id="nu-animation" width="780" height="400" viewBox="0 0 780 400"></svg>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: #007bff;"></div><span>5'-3' Backbone (Blue)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #dc3545;"></div><span>3'-5' Backbone (Red)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #F08080;"></div><span>Adenine (A)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #F5D67D;"></div><span>Thymine (T)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #58D68D;"></div><span>Guanine (G)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #5DADE2;"></div><span>Cytosine (C)</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #BDC3C7;"></div><span>Hydrogen Bonds</span></div>
+                </div>
+            </div>
+            <div class="explanation-box">
+                <h3 id="nu-step-title">Nitrosourea: Step 1</h3>
+                <p class="explanation-text" id="nu-explanation"></p>
+            </div>
+            <div class="navigation-buttons">
+                <button id="nu-prev-btn">Previous</button>
+                <button id="nu-next-btn">Next</button>
+                <button id="nu-restart-btn">Restart</button>
+            </div>
+        </div>
+        <script>
+        const svgNS = "http://www.w3.org/2000/svg";
+        
+        function clearSVG(id) {
+            const svg = document.getElementById(id);
+            while (svg.firstChild) svg.removeChild(svg.firstChild);
+        }
+        function createMolecule(svg, id, x, y, color, labelText, size = 24) {
+            const g = document.createElementNS(svgNS, "g");
+            g.setAttribute("id", id);
+            const circle = document.createElementNS(svgNS, "circle");
+            circle.setAttribute("cx", x);
+            circle.setAttribute("cy", y);
+            circle.setAttribute("r", size);
+            circle.setAttribute("fill", color);
+            circle.setAttribute("stroke", "#333");
+            circle.setAttribute("stroke-width", "2");
+            g.appendChild(circle);
+            if (labelText) {
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", x);
+                text.setAttribute("y", y + size + 18);
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("font-size", "18");
+                text.setAttribute("fill", "#333");
+                text.setAttribute("font-weight", "bold");
+                text.textContent = labelText;
+                g.appendChild(text);
+            }
+            svg.appendChild(g);
+            return g;
+        }
+        function createArrow(svg, x1, y1, x2, y2, color="#333", width=3, label="", opacity=1) {
+            let defs = svg.querySelector('defs');
+            if (!defs) {
+                defs = document.createElementNS(svgNS, 'defs');
+                svg.appendChild(defs);
+            }
+            if (!svg.querySelector('#arrowhead')) {
+                const marker = document.createElementNS(svgNS, 'marker');
+                marker.setAttribute('id', 'arrowhead');
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '7');
+                marker.setAttribute('refX', '10');
+                marker.setAttribute('refY', '3.5');
+                marker.setAttribute('orient', 'auto');
+                marker.setAttribute('markerUnits', 'strokeWidth');
+                const polygon = document.createElementNS(svgNS, 'polygon');
+                polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+                polygon.setAttribute('fill', '#333');
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+            }
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("stroke", color);
+            line.setAttribute("stroke-width", width);
+            line.setAttribute("marker-end", "url(#arrowhead)");
+            line.setAttribute("opacity", opacity);
+            svg.appendChild(line);
+            if (label) {
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", (x1 + x2) / 2 + 14);
+                text.setAttribute("y", (y1 + y2) / 2 - 8);
+                text.setAttribute("fill", color);
+                text.setAttribute("font-size", "14px");
+                text.setAttribute("font-weight", "bold");
+                text.setAttribute("opacity", opacity);
+                text.textContent = label;
+                svg.appendChild(text);
+            }
+            return line;
+        }
+        function createBond(svg, id, x1, y1, x2, y2, color = "#FBC02D", width = 4, options = {}) {
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("id", id);
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("stroke", color);
+            line.setAttribute("stroke-width", width);
+            if (options.dash) line.setAttribute("stroke-dasharray", "10,6");
+            svg.appendChild(line);
+            if (options.label) {
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", (x1 + x2) / 2 + (options.labelOffsetX || 12));
+                text.setAttribute("y", (y1 + y2) / 2 + (options.labelOffsetY || -12));
+                text.setAttribute("fill", options.labelColor || "#D32F2F");
+                text.setAttribute("font-size", "16px");
+                text.setAttribute("font-weight", "bold");
+                text.textContent = options.label;
+                svg.appendChild(text);
+            }
+            return line;
+        }
+        function createDetailedDNAStrands(svg, idPrefix, x_center, y_offset, overall_height) {
+            const amplitude = 40, frequency = 0.025, segmentStep = 2;
+            const backboneColorBlue = '#007bff', backboneColorRed = '#dc3545';
+            const adenineColor = '#F08080', thymineColor = '#F5D67D', guanineColor = '#58D68D', cytosineColor = '#5DADE2', hBondColor = '#BDC3C7';
+            const backboneWidth = 5, baseRectWidthPurine = 18, baseRectHeightPurine = 10, baseRectWidthPyrimidine = 14, baseRectHeightPyrimidine = 10;
+            const sequence = ['A', 'T', 'G', 'C', 'G', 'T', 'A', 'C', 'G', 'A'];
+            const numBasePairs = sequence.length;
+            const basePairSpacing = overall_height / (numBasePairs + 1);
+            const strandBlue = document.createElementNS(svgNS, 'path');
+            const strandRed = document.createElementNS(svgNS, 'path');
+            let dBlue = '', dRed = '';
+            const startY = y_offset;
+            const endY = y_offset + overall_height;
+            for (let currentY = startY; currentY <= endY; currentY += segmentStep) {
+                const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
+                const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
+                if (currentY === startY) {
+                    dBlue += `M${xBlue},${currentY}`;
+                    dRed += `M${xRed},${currentY}`;
+                } else {
+                    dBlue += ` L${xBlue},${currentY}`;
+                    dRed += ` L${xRed},${currentY}`;
+                }
+            }
+            strandBlue.setAttribute('d', dBlue);
+            strandBlue.setAttribute('stroke', backboneColorBlue);
+            strandBlue.setAttribute('stroke-width', backboneWidth);
+            strandBlue.setAttribute('fill', 'none');
+            svg.appendChild(strandBlue);
+            strandRed.setAttribute('d', dRed);
+            strandRed.setAttribute('stroke', backboneColorRed);
+            strandRed.setAttribute('stroke-width', backboneWidth);
+            strandRed.setAttribute('fill', 'none');
+            svg.appendChild(strandRed);
+        
+            const guanines = [];
+            for (let i = 0; i < numBasePairs; i++) {
+                const currentY = y_offset + (i + 1) * basePairSpacing;
+                const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
+                const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
+                let color1, color2;
+                if (sequence[i] === 'A') { color1=adenineColor; color2=thymineColor; }
+                if (sequence[i] === 'T') { color1=thymineColor; color2=adenineColor; }
+                if (sequence[i] === 'G') { color1=guanineColor; color2=cytosineColor; }
+                if (sequence[i] === 'C') { color1=cytosineColor; color2=guanineColor; }
+                const rect1 = document.createElementNS(svgNS, 'rect');
+                rect1.setAttribute('x', xBlue-8); rect1.setAttribute('y', currentY-5); rect1.setAttribute('width', 16); rect1.setAttribute('height', 10);
+                rect1.setAttribute('fill', color1); rect1.setAttribute('rx', 2);
+                svg.appendChild(rect1);
+                const rect2 = document.createElementNS(svgNS, 'rect');
+                rect2.setAttribute('x', xRed-8); rect2.setAttribute('y', currentY-5); rect2.setAttribute('width', 16); rect2.setAttribute('height', 10);
+                rect2.setAttribute('fill', color2); rect2.setAttribute('rx', 2);
+                svg.appendChild(rect2);
+                if (sequence[i] === 'G') guanines.push({x: xBlue+8, y: currentY});
+                if (sequence[i] === 'C') guanines.push({x: xRed-8, y: currentY});
+                const bond = document.createElementNS(svgNS, 'line');
+                bond.setAttribute('x1', xBlue+8); bond.setAttribute('y1', currentY);
+                bond.setAttribute('x2', xRed-8); bond.setAttribute('y2', currentY);
+                bond.setAttribute('stroke', hBondColor); bond.setAttribute('stroke-width', 2);
+                svg.appendChild(bond);
+            }
+            return { guanines };
+        }
+        
+        const stepExplanations = [
+            "Nitrosoureas are highly lipophilic, cross the blood-brain barrier, and enter the cell.",
+            "In the cytoplasm, nitrosoureas decompose into a diazohydroxide and an isocyanate.",
+            "The diazohydroxide rearranges to a bifunctional alkylating cation.",
+            "The carbocation alkylates guanine on one DNA strand and then cross-links to guanine on the opposite strand. <b>(Arrow shows the cation attacking the DNA)</b>",
+            "The isocyanate byproduct carbamylates proteins, including DNA repair enzymes, further blocking repair.",
+            "DNA cross-linking and impaired repair lead to cell death (apoptosis)."
+        ];
+        const improvedAnimations = [
+            function() {
+                clearSVG('nu-animation');
+                const svg = document.getElementById('nu-animation');
+                createMolecule(svg, 'nu-molecule', 170, 110, '#FF6F00', 'Nitrosourea', 30);
+                createBond(svg, 'bbb', 350, 60, 350, 340, '#78909C', 8, {dash: true, label: "Blood-Brain Barrier", labelColor: '#78909C', labelOffsetX: 10, labelOffsetY: -30});
+            },
+            function() {
+                clearSVG('nu-animation');
+                const svg = document.getElementById('nu-animation');
+                createMolecule(svg, 'nu-molecule', 160, 110, '#FF6F00', 'Nitrosourea', 30);
+                createMolecule(svg, 'diazo', 350, 110, '#AD1457', 'Diazohydroxide', 20);
+                createMolecule(svg, 'isocyanate', 350, 240, '#4527A0', 'Isocyanate', 20);
+                createArrow(svg, 190, 110, 330, 110, "#222", 3, "Decompose");
+                createArrow(svg, 190, 110, 330, 240, "#222", 3, "Decompose");
+            },
+            function() {
+                clearSVG('nu-animation');
+                const svg = document.getElementById('nu-animation');
+                createMolecule(svg, 'diazo', 220, 110, '#AD1457', 'Diazohydroxide', 20);
+                createMolecule(svg, 'cation', 430, 110, '#D84315', 'Bifunctional Alkylating Cation', 24);
+                createArrow(svg, 240, 110, 410, 110, "#D84315", 3, "Rearrange");
+            },
+            function() {
+                clearSVG('nu-animation');
+                const svg = document.getElementById('nu-animation');
+                createMolecule(svg, 'cation', 160, 180, '#D84315', 'Alkylating Cation', 22);
+                const dna = createDetailedDNAStrands(svg, 'nu-dna', 560, 80, 210);
+                if (dna.guanines.length >= 2) {
+                    createBond(svg, 'alkylate', 160, 180, dna.guanines[1].x, dna.guanines[1].y, "#FBC02D", 5, {label: "Alkylation (Guanine)", labelColor: "#FBC02D", labelOffsetX: 12, labelOffsetY: -14});
+                    createArrow(svg, 182, 180, dna.guanines[1].x-12, dna.guanines[1].y, "#1976D2", 4, "Attack", 1);
+                    // FIX: use the last guanine, not [7]
+                    createBond(svg, 'crosslink', dna.guanines[1].x, dna.guanines[1].y, dna.guanines[dna.guanines.length-1].x, dna.guanines[dna.guanines.length-1].y, "#D32F2F", 7, {dash: true, label: "DNA Cross-Link", labelColor: "#D32F2F", labelOffsetX: 12, labelOffsetY: -14});
+                }
+            },
+            function() {
+                clearSVG('nu-animation');
+                const svg = document.getElementById('nu-animation');
+                createMolecule(svg, 'isocyanate', 220, 140, '#8e24aa', 'Isocyanate', 28);
+                createMolecule(svg, 'repair-enzyme', 520, 140, '#1976d2', 'Repair Enzyme', 36);
+                createArrow(svg, 255, 140, 475, 140, "#43A047", 8, "Carbamylation");
+                createArrow(svg, 485, 140, 540, 140, "#43A047", 5, "Inhibit");
+                const block = document.createElementNS(svgNS, "text");
+                block.setAttribute("x", 520);
+                block.setAttribute("y", 150);
+                block.setAttribute("text-anchor", "middle");
+                block.setAttribute("font-size", "30");
+                block.setAttribute("fill", "#C62828");
+                block.setAttribute("font-weight", "bold");
+                block.setAttribute("opacity", "0.7");
+                block.textContent = "✖";
+                svg.appendChild(block);
+            },
+            function() {
+                clearSVG('nu-animation');
+                const svg = document.getElementById('nu-animation');
+                const dna = createDetailedDNAStrands(svg, 'nu-dna', 400, 80, 210);
+                if (dna.guanines.length >= 2) {
+                    // FIX: use the last guanine, not [7]
+                    createBond(svg, 'crosslink', dna.guanines[1].x, dna.guanines[1].y, dna.guanines[dna.guanines.length-1].x, dna.guanines[dna.guanines.length-1].y, "#D32F2F", 7, {dash: true});
+                }
+                createMolecule(svg, 'damaged-enzyme', 150, 340, '#78909C', 'Impaired Repair', 28);
+                const t = document.createElementNS(svgNS, "text");
+                t.setAttribute("x", 630);
+                t.setAttribute("y", 370);
+                t.setAttribute("text-anchor", "middle");
+                t.setAttribute("font-size", "24");
+                t.setAttribute("fill", "#C62828");
+                t.setAttribute("font-weight", "bold");
+                t.textContent = "Apoptosis";
+                svg.appendChild(t);
+                createArrow(svg, 470, 180, 630, 350, "#C62828", 5, "Cell Death");
+            }
+        ];
+        
+        let currentStep = 0;
+        function updateExplanation() {
+            document.getElementById('nu-explanation').innerHTML = stepExplanations[currentStep];
+            document.getElementById('nu-step-title').innerText = "Nitrosourea: Step " + (currentStep + 1);
+        }
+        function showStep() {
+            improvedAnimations[currentStep]();
+            updateExplanation();
+            document.getElementById('nu-prev-btn').disabled = currentStep === 0;
+            document.getElementById('nu-next-btn').disabled = currentStep === improvedAnimations.length-1;
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+
+    const sidebar = document.querySelector(".sidebar");
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const navLinks = document.querySelectorAll(".nav-links > li > a"); // Target direct links within list items
+    const hasSubmenuItems = document.querySelectorAll('.has-submenu');
+    const subLinks = document.querySelectorAll('.sub-links a');
+
+    // Sidebar toggle logic
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+            localStorage.setItem('sidebarExpanded', sidebar.classList.contains('active'));
+        });
+
+        // Restore state
+        if (localStorage.getItem('sidebarExpanded') === 'true') {
+            sidebar.classList.add('active');
+        }
+    }
+
+    // Submenu toggle
+    hasSubmenuItems.forEach(item => {
+        const link = item.querySelector('a');
+        if (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                item.classList.toggle('active');
+            });
+        }
+    });
+
+    // Close sidebar when a submenu link is clicked
+    subLinks.forEach(subLink => {
+        subLink.addEventListener('click', () => {
+            sidebar.classList.remove("active");
+            localStorage.setItem('sidebarExpanded', 'false');
+        });
+    });
+
+    // Close sidebar when a top-level (non-submenu) link is clicked
+    navLinks.forEach(link => {
+        link.addEventListener("click", () => {
+            if (!link.parentElement.classList.contains('has-submenu')) { // Check the parent LI
+                sidebar.classList.remove("active");
+                localStorage.setItem('sidebarExpanded', 'false');
+            }
+        });
+    });
+            showStep();
+            document.getElementById('nu-prev-btn').onclick = function() {
+                if (currentStep > 0) {
+                    currentStep--;
+                    showStep();
+                }
+            };
+            document.getElementById('nu-next-btn').onclick = function() {
+                if (currentStep < improvedAnimations.length-1) {
+                    currentStep++;
+                    showStep();
+                }
+            };
+            document.getElementById('nu-restart-btn').onclick = function() {
+                currentStep = 0;
+                showStep();
+            };
+        });
+        </script>
