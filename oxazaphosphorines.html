@@ -526,6 +526,65 @@
             opacity: 0.7;
         }
 
+        .mechanism-flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 32px;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.mechanism-visualization {
+    min-width: 440px;
+    /* Keep your existing .mechanism-visualization styles here */
+}
+
+.navigation-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin: 0;
+    min-width: 180px;
+    max-width: 200px;
+}
+
+@media (max-width: 900px) {
+    .mechanism-flex-row {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    .navigation-buttons {
+        flex-direction: row;
+        margin-top: 20px;
+        min-width: 0;
+        max-width: none;
+        justify-content: center;
+    }
+}  .legend {
+            min-width: 190px;
+            padding: 18px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 4px #0001;
+            font-size: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 9px;
+        }
+        .legend-color {
+            width: 19px;
+            height: 19px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #bbb;
+        }
+
     </style>
 </head>
 
@@ -635,28 +694,28 @@
 
     <div class="scene" id="oxazaphosphorine-mechanism">
         <h2>Oxazaphosphorine Animation</h2>
-        <div class="mechanism-flex">
+        <div class="mechanism-flex-row">
             <div class="mechanism-visualization">
                 <svg id="ox-animation" width="780" height="400" viewBox="0 0 780 400"></svg>
             </div>
-            <div class="legend">
-                <div class="legend-item"><div class="legend-color" style="background: #007bff;"></div><span>5'-3' Backbone (Blue)</span></div>
-                <div class="legend-item"><div class="legend-color" style="background: #dc3545;"></div><span>3'-5' Backbone (Red)</span></div>
-                <div class="legend-item"><div class="legend-color" style="background: #F08080;"></div><span>Adenine (A)</span></div>
-                <div class="legend-item"><div class="legend-color" style="background: #F5D67D;"></div><span>Thymine (T)</span></div>
-                <div class="legend-item"><div class="legend-color" style="background: #58D68D;"></div><span>Guanine (G)</span></div>
-                <div class="legend-item"><div class="legend-color" style="background: #5DADE2;"></div><span>Cytosine (C)</span></div>
-                <div class="legend-item"><div class="legend-color" style="background: #BDC3C7;"></div><span>Hydrogen Bonds</span></div>
+            <div class="navigation-buttons">
+                <button id="ox-prev-btn" onclick="navigateTo('previous')">Previous</button>
+                <button id="ox-next-btn" onclick="navigateTo('next')">Next</button>
+                <button onclick="navigateTo('restart')">Restart</button>
             </div>
+        </div>
+        <div class="legend">
+            <div class="legend-item"><div class="legend-color" style="background: #007bff;"></div><span>5'-3' Backbone (Blue)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #dc3545;"></div><span>3'-5' Backbone (Red)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #F08080;"></div><span>Adenine (A)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #F5D67D;"></div><span>Thymine (T)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #58D68D;"></div><span>Guanine (G)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #5DADE2;"></div><span>Cytosine (C)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #BDC3C7;"></div><span>Hydrogen Bonds</span></div>
         </div>
         <div class="explanation-box">
             <h3 id="ox-step-title">Oxazaphosphorine: Step 1</h3>
             <p class="explanation-text" id="ox-explanation"></p>
-        </div>
-        <div class="navigation-buttons">
-            <button id="ox-prev-btn" onclick="navigateTo('previous')">Previous</button>
-            <button id="ox-next-btn" onclick="navigateTo('next')">Next</button>
-            <button onclick="navigateTo('restart')">Restart</button>
         </div>
     </div>
     
@@ -671,37 +730,37 @@
         width: 100%;
     }
     .mechanism-visualization {
-        min-width: 780px;
-        min-height: 400px;
-        background: rgba(255,255,255,0.9);
-        border-radius: 10px;
-        border: 1px solid #eee;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+    transform-origin: center center;
+    transition: transform 0.3s;
+    overflow-x: auto; /* allows horizontal scroll if needed */
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px 0;
+    background: rgba(245, 245, 245, 0.5);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #eee;
+}
     .legend {
-        min-width: 190px;
-        padding: 18px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        box-shadow: 0 1px 4px #0001;
-        font-size: 15px;
-    }
-    .legend-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 9px;
-    }
-    .legend-color {
-        width: 19px;
-        height: 19px;
-        border-radius: 4px;
-        margin-right: 10px;
-        border: 1px solid #bbb;
-    }
+    display: flex;
+    flex-wrap: nowrap; /* prevents wrapping, remove if you want wrap on small screens */
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(245, 245, 245, 0.8);
+    border-radius: 8px;
+    overflow-x: auto;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 0 8px 0 0; /* horizontal space, no vertical margin */
+    white-space: nowrap;
+}
     @media (max-width: 900px) {
         .mechanism-flex { flex-direction: column; align-items: center; gap: 14px; }
         .mechanism-visualization, .legend { min-width: 0; width: 95vw; max-width: 780px;}
