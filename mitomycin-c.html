@@ -525,28 +525,34 @@
             transform: translateY(-50%);
             opacity: 0.7;
         }
-
         .legend {
-            min-width: 190px;
-            padding: 18px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            box-shadow: 0 1px 4px #0001;
-            font-size: 15px;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 9px;
-        }
-        .legend-color {
-            width: 19px;
-            height: 19px;
-            border-radius: 4px;
-            margin-right: 10px;
-            border: 1px solid #bbb;
-        }
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(245, 245, 245, 0.8);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  margin-right: 8px;
+  border: 1.5px solid #bbb;
+  display: inline-block;
+  /* background is set inline in HTML */
+}
         @media (max-width: 900px) {
             .mechanism-flex { flex-direction: column; align-items: center; gap: 14px; }
             .mechanism-visualization, .legend { min-width: 0; width: 95vw; max-width: 780px;}
@@ -561,6 +567,55 @@
             margin-left: auto;
             margin-right: auto;
         }
+
+        .mechanism-flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 32px;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.mechanism-visualization {
+    transform-origin: center center;
+    transition: transform 0.3s;
+    overflow-x: auto; /* allows horizontal scroll if needed */
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px 0;
+    background: rgba(245, 245, 245, 0.5);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #eee;
+}
+
+.navigation-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin: 0;
+    min-width: 180px;
+    max-width: 200px;
+}
+
+@media (max-width: 900px) {
+    .mechanism-flex-row {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    .navigation-buttons {
+        flex-direction: row;
+        margin-top: 20px;
+        min-width: 0;
+        max-width: none;
+        justify-content: center;
+    }
+}
 
     </style>
 </head>
@@ -673,11 +728,18 @@
         </p>
     </div>
 
-    <!-- Mitomycin C Mechanism -->
+ <!-- Mitomycin C Mechanism -->
 <div class="scene" id="mitomycin-c-mechanism">
     <h2>Mitomycin C Animation</h2>
-    <div class="mechanism-visualization" style="display: flex; justify-content: center; align-items: center;">
-        <svg id="mc-animation" width="500" height="300" viewBox="0 0 500 280"></svg>
+    <div class="mechanism-flex-row">
+        <div class="mechanism-visualization" style="min-width: 340px;">
+            <svg id="mc-animation" width="500" height="300" viewBox="0 0 500 280"></svg>
+        </div>
+        <div class="navigation-buttons">
+            <button id="mc-prev-btn" onclick="navigateTo('previous', 'mitomycin-c')">Previous</button>
+            <button id="mc-next-btn" onclick="navigateTo('next', 'mitomycin-c')">Next</button>
+            <button onclick="navigateTo('restart', 'mitomycin-c')">Restart</button>
+        </div>
     </div>
     <div class="legend">
         <div class="legend-item"><div class="legend-color" style="background: #007bff;"></div><span>5'-3' Backbone (Blue)</span></div>
@@ -691,11 +753,6 @@
     <div class="explanation-box">
         <h3 id="mc-step-title">Mitomycin C: Step 1</h3>
         <p class="explanation-text" id="mc-explanation"></p>
-    </div>
-    <div class="navigation-buttons">
-        <button id="mc-prev-btn" onclick="navigateTo('previous', 'mitomycin-c')">Previous</button>
-        <button id="mc-next-btn" onclick="navigateTo('next', 'mitomycin-c')">Next</button>
-        <button onclick="navigateTo('restart', 'mitomycin-c')">Restart</button>
     </div>
 </div>
 
