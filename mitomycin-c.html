@@ -680,8 +680,7 @@
     <div class="scene chemistry-theme">
         <figure>
 
-            <img src=" https://kwhiteson.bio.uci.edu/files/2016/11/m2.png
-            " alt="Mitomycin2">
+            <img src="mitomycin-c1.png" alt="Mitomycin2">
             <!--<figcaption class="main-caption">Nitrogen Mustard Activation Pathway</figcaption>-->
             <figcaption class="source-caption">
                 <i>Credit to Whiteson Lab. (n.d.). [Image of molecule M2]. University of California, Irvine. </i>
@@ -1190,13 +1189,53 @@ function navigateTo(action, agent) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Sidebar logic omitted for brevity, use your own as needed
 
     // Initialize Mitomycin C animation logic
+
+    const sidebar = document.querySelector(".sidebar");
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const navLinks = document.querySelectorAll(".nav-links > li > a");
+    const hasSubmenuItems = document.querySelectorAll('.has-submenu');
+    const subLinks = document.querySelectorAll('.sub-links a');
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+            localStorage.setItem('sidebarExpanded', sidebar.classList.contains('active'));
+        });
+        if (localStorage.getItem('sidebarExpanded') === 'true') {
+            sidebar.classList.add('active');
+        }
+    }
+    hasSubmenuItems.forEach(item => {
+        const link = item.querySelector('a');
+        if (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                item.classList.toggle('active');
+            });
+        }
+    });
+    subLinks.forEach(subLink => {
+        subLink.addEventListener('click', () => {
+            sidebar.classList.remove("active");
+            localStorage.setItem('sidebarExpanded', 'false');
+        });
+    });
+    navLinks.forEach(link => {
+        link.addEventListener("click", () => {
+            if (!link.parentElement.classList.contains('has-submenu')) {
+                sidebar.classList.remove("active");
+                localStorage.setItem('sidebarExpanded', 'false');
+            }
+        });
+    });
+
     updateMitomycinC();
 
-    document.getElementById('mc-prev-btn').onclick = () => navigateTo('previous', 'mitomycin-c');
-    document.getElementById('mc-next-btn').onclick = () => navigateTo('next', 'mitomycin-c');
-    document.getElementById('mc-restart-btn').onclick = () => navigateTo('restart', 'mitomycin-c');
+document.getElementById('mc-prev-btn').onclick = () => navigateTo('previous', 'mitomycin-c');
+document.getElementById('mc-next-btn').onclick = () => navigateTo('next', 'mitomycin-c');
+document.getElementById('mc-restart-btn').onclick = () => navigateTo('restart', 'mitomycin-c');
 });
 </script>
+</body>
+</html>
