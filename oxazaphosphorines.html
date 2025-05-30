@@ -770,564 +770,691 @@
     </style>
     
     <script>
-    const svgNS = "http://www.w3.org/2000/svg";
-
-// --- Helper: bring molecules to front ---
-function bringMoleculesToFront(svg) {
-    // Bring all molecule <g> groups and big circles to the end of SVG (top)
-    Array.from(svg.querySelectorAll('g[id^="atom-"],g[id*="Molecule"],g[id*="molecule"]')).forEach(g => svg.appendChild(g));
-    Array.from(svg.querySelectorAll('circle')).forEach(c => {
-        if (parseFloat(c.getAttribute("r")) >= 14) svg.appendChild(c);
-    });
-    Array.from(svg.querySelectorAll('text')).forEach(t => {
-        if (["Cyclophosphamide", "Aldophosphamide", "Acrolein", "Phosphoramide Mustard", "4-hydroxycyclophosphamide"].includes(t.textContent)) svg.appendChild(t);
-    });
-}
-
-function addGlowFilter(svg) {
-    let existing = svg.querySelector('defs#glow-defs');
-    if (existing) return;
-    let defs = document.createElementNS(svgNS, 'defs');
-    defs.setAttribute('id', 'glow-defs');
-    let filter = document.createElementNS(svgNS, 'filter');
-    filter.setAttribute('id', 'glow');
-    filter.setAttribute('x', '-50%');
-    filter.setAttribute('y', '-50%');
-    filter.setAttribute('width', '200%');
-    filter.setAttribute('height', '200%');
-    let feDropShadow = document.createElementNS(svgNS, 'feDropShadow');
-    feDropShadow.setAttribute('dx', '0');
-    feDropShadow.setAttribute('dy', '0');
-    feDropShadow.setAttribute('stdDeviation', '4');
-    feDropShadow.setAttribute('flood-color', '#FFD600');
-    feDropShadow.setAttribute('flood-opacity', '0.9');
-    filter.appendChild(feDropShadow);
-    defs.appendChild(filter);
-    svg.appendChild(defs);
-}
-
-const AtomColors = {
-    'C': '#444', 'O': '#1976D2', 'N': '#43A047',
-    'P': '#D81B60', 'Cl': '#FFA726', 'H': '#BBB'
-};
-
-function labelStructure(svg, label, x, y, color="#333") {
-    const t = document.createElementNS(svgNS, "text");
-    t.setAttribute("x", x);
-    t.setAttribute("y", y);
-    t.setAttribute("text-anchor", "middle");
-    t.setAttribute("font-size", "20px");
-    t.setAttribute("font-weight", "bold");
-    t.setAttribute("fill", color);
-    t.textContent = label;
-    svg.appendChild(t);
-}
-
-function drawCyclophosphamideStructure(svg, xOffset, yOffset, scale=1.2) {
-    function atom(x, y, label, colorKey, atomId) {
-        const group = document.createElementNS(svgNS, "g");
-        group.setAttribute("id", "atom-"+atomId);
-        const circle = document.createElementNS(svgNS, "circle");
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", y);
-        circle.setAttribute("r", 14 * scale);
-        circle.setAttribute("fill", AtomColors[colorKey] || "#bbb");
-        circle.setAttribute("stroke", "#333");
-        circle.setAttribute("stroke-width", "2");
-        group.appendChild(circle);
-        const text = document.createElementNS(svgNS, "text");
-        text.setAttribute("x", x);
-        text.setAttribute("y", y+6*scale);
-        text.setAttribute("text-anchor", "middle");
-        text.setAttribute("font-size", 18*scale);
-        text.setAttribute("fill", "#fff");
-        text.setAttribute("font-weight", "bold");
-        text.textContent = label;
-        group.appendChild(text);
-        svg.appendChild(group);
-    }
-    function bond(x1, y1, x2, y2, thick=false) {
-        const line = document.createElementNS(svgNS, "line");
-        line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-        line.setAttribute("x2", x2); line.setAttribute("y2", y2);
-        line.setAttribute("stroke", "#888");
-        line.setAttribute("stroke-width", thick ? 6 : 3);
-        svg.appendChild(line);
-    }
-    const P = [xOffset+110, yOffset+90];
-    const O1 = [xOffset+170, yOffset+70];
-    const O2 = [xOffset+165, yOffset+130];
-    const N1 = [xOffset+55, yOffset+50];
-    const N2 = [xOffset+55, yOffset+130];
-    const Cl1 = [xOffset+20, yOffset+30];
-    const Cl2 = [xOffset+20, yOffset+150];
-    const C1 = [xOffset+85, yOffset+40];
-    const C2 = [xOffset+85, yOffset+140];
-    const backbone = [xOffset+110, yOffset+190];
-    bond(...P, ...O1); bond(...P, ...O2); bond(...P, ...N1, true); bond(...P, ...N2, true);
-    bond(...N1, ...Cl1); bond(...N2, ...Cl2); bond(...N1, ...C1); bond(...N2, ...C2);
-    bond(...C1, ...backbone); bond(...C2, ...backbone);
-    atom(...P, 'P', 'P', 'P');
-    atom(...O1, 'O', 'O', 'O1');
-    atom(...O2, 'O', 'O', 'O2');
-    atom(...N1, 'N', 'N', 'N1');
-    atom(...N2, 'N', 'N', 'N2');
-    atom(...Cl1, 'Cl', 'Cl', 'Cl1');
-    atom(...Cl2, 'Cl', 'Cl', 'Cl2');
-    atom(...C1, 'C', 'C', 'C1');
-    atom(...C2, 'C', 'C', 'C2');
-    atom(...backbone, 'C', 'C', 'CB');
-    labelStructure(svg, "Cyclophosphamide", xOffset+110, yOffset+270, "#1976D2");
-}
-
-function drawOHCPStructure(svg, x, y, scale=1.2) {
-    drawCyclophosphamideStructure(svg, x, y, scale);
-    const ox = x+180, oy = y+40;
-    const line = document.createElementNS(svgNS, "line");
-    line.setAttribute("x1", x+170); line.setAttribute("y1", y+70);
-    line.setAttribute("x2", ox); line.setAttribute("y2", oy);
-    line.setAttribute("stroke", "#1976D2"); line.setAttribute("stroke-width", 3);
-    svg.appendChild(line);
-    const circle = document.createElementNS(svgNS, "circle");
-    circle.setAttribute("cx", ox); circle.setAttribute("cy", oy);
-    circle.setAttribute("r", 10);
-    circle.setAttribute("fill", AtomColors.O);
-    svg.appendChild(circle);
-    const textO = document.createElementNS(svgNS, "text");
-    textO.setAttribute("x", ox); textO.setAttribute("y", oy+5);
-    textO.setAttribute("text-anchor", "middle");
-    textO.setAttribute("font-size", "14px");
-    textO.setAttribute("fill", "#fff");
-    textO.setAttribute("font-weight", "bold");
-    textO.textContent = "O";
-    svg.appendChild(textO);
-    const hx = ox+18, hy = oy-6;
-    const hline = document.createElementNS(svgNS, "line");
-    hline.setAttribute("x1", ox); hline.setAttribute("y1", oy);
-    hline.setAttribute("x2", hx); hline.setAttribute("y2", hy);
-    hline.setAttribute("stroke", "#BBB"); hline.setAttribute("stroke-width", 2);
-    svg.appendChild(hline);
-    const h = document.createElementNS(svgNS, "text");
-    h.setAttribute("x", hx); h.setAttribute("y", hy-2);
-    h.setAttribute("font-size", "12px");
-    h.setAttribute("fill", AtomColors.H);
-    h.textContent = "H";
-    svg.appendChild(h);
-    labelStructure(svg, "4-hydroxycyclophosphamide", x+110, y+290, "#43A047");
-}
-
-function drawAldophosphamideStructure(svg, x, y, scale=1.2) {
-    drawCyclophosphamideStructure(svg, x, y, scale);
-    const ax = x+110, ay = y+210;
-    const line = document.createElementNS(svgNS, "line");
-    line.setAttribute("x1", x+110); line.setAttribute("y1", y+190);
-    line.setAttribute("x2", ax); line.setAttribute("y2", ay);
-    line.setAttribute("stroke", "#FFA726"); line.setAttribute("stroke-width", 3);
-    svg.appendChild(line);
-    const text = document.createElementNS(svgNS, "text");
-    text.setAttribute("x", ax+18); text.setAttribute("y", ay+6);
-    text.setAttribute("font-size", "15px");
-    text.setAttribute("fill", "#FFA726");
-    text.textContent = "CHO";
-    svg.appendChild(text);
-    labelStructure(svg, "Aldophosphamide", x+110, y+290, "#FFA726");
-}
-
-function drawPMStructure(svg, x, y, scale=1.2) {
-    const c = document.createElementNS(svgNS, "circle");
-    c.setAttribute("cx", x+110); c.setAttribute("cy", y+90);
-    c.setAttribute("r", 20*scale);
-    c.setAttribute("fill", "#D81B60");
-    c.setAttribute("stroke", "#333"); c.setAttribute("stroke-width", "2");
-    svg.appendChild(c);
-    function arm(x1, y1, x2, y2, x3, y3, id) {
-        const l1 = document.createElementNS(svgNS, "line");
-        l1.setAttribute("x1", x1); l1.setAttribute("y1", y1);
-        l1.setAttribute("x2", x2); l1.setAttribute("y2", y2);
-        l1.setAttribute("stroke", "#43A047"); l1.setAttribute("stroke-width", 5);
-        svg.appendChild(l1);
-        const l2 = document.createElementNS(svgNS, "line");
-        l2.setAttribute("x1", x2); l2.setAttribute("y1", y2);
-        l2.setAttribute("x2", x3); l2.setAttribute("y2", y3);
-        l2.setAttribute("stroke", "#FFA726"); l2.setAttribute("stroke-width", 4);
-        svg.appendChild(l2);
-        const cl = document.createElementNS(svgNS, "text");
-        cl.setAttribute("x", x3+7); cl.setAttribute("y", y3+2);
-        cl.setAttribute("font-size", "17px");
-        cl.setAttribute("fill", AtomColors.Cl);
-        cl.setAttribute("font-weight", "bold");
-        cl.textContent = "Cl";
-        svg.appendChild(cl);
-    }
-    arm(x+110, y+90, x+30, y+40, x+10, y+20, 1);
-    arm(x+110, y+90, x+30, y+140, x+10, y+170, 2);
-    const n = document.createElementNS(svgNS, "text");
-    n.setAttribute("x", x+110); n.setAttribute("y", y+90+7);
-    n.setAttribute("text-anchor", "middle");
-    n.setAttribute("font-size", "22px");
-    n.setAttribute("fill", AtomColors.N);
-    n.setAttribute("font-weight", "bold");
-    n.textContent = "N";
-    svg.appendChild(n);
-    labelStructure(svg, "Phosphoramide Mustard", x+110, y+200, "#D81B60");
-}
-
-function drawAcroleinStructure(svg, x, y, scale=1.2) {
-    const l = document.createElementNS(svgNS, "line");
-    l.setAttribute("x1", x+40); l.setAttribute("y1", y+90);
-    l.setAttribute("x2", x+160); l.setAttribute("y2", y+90);
-    l.setAttribute("stroke", "#444"); l.setAttribute("stroke-width", 4);
-    svg.appendChild(l);
-    const l2 = document.createElementNS(svgNS, "line");
-    l2.setAttribute("x1", x+40); l2.setAttribute("y1", y+90);
-    l2.setAttribute("x2", x+30); l2.setAttribute("y2", y+70);
-    l2.setAttribute("stroke", "#444"); l2.setAttribute("stroke-width", 2);
-    svg.appendChild(l2);
-    const h2 = document.createElementNS(svgNS, "text");
-    h2.setAttribute("x", x+18); h2.setAttribute("y", y+65);
-    h2.setAttribute("font-size", "15px");
-    h2.setAttribute("fill", AtomColors.H);
-    h2.textContent = "H2C";
-    svg.appendChild(h2);
-    const o = document.createElementNS(svgNS, "text");
-    o.setAttribute("x", x+160+18); o.setAttribute("y", y+90+6);
-    o.setAttribute("font-size", "16px");
-    o.setAttribute("fill", AtomColors.O);
-    o.textContent = "O";
-    svg.appendChild(o);
-    const d = document.createElementNS(svgNS, "line");
-    d.setAttribute("x1", x+160); d.setAttribute("y1", y+90);
-    d.setAttribute("x2", x+160); d.setAttribute("y2", y+70);
-    d.setAttribute("stroke", AtomColors.O); d.setAttribute("stroke-width", 3);
-    svg.appendChild(d);
-    labelStructure(svg, "Acrolein", x+100, y+200, "#607D8B");
-}
-
-function createBond(svg, id, x1, y1, x2, y2, color = "#FBC02D", width = 4, options = {}) {
-    const line = document.createElementNS(svgNS, "line");
-    line.setAttribute("id", id);
-    line.setAttribute("x1", x1);
-    line.setAttribute("y1", y1);
-    line.setAttribute("x2", x2);
-    line.setAttribute("y2", y2);
-    line.setAttribute("stroke", color);
-    line.setAttribute("stroke-width", width);
-    if (options.dash) line.setAttribute("stroke-dasharray", "10,6");
-    if (options.glow) line.setAttribute("filter", "url(#glow)");
-    svg.appendChild(line);
-    if (options.label) {
-        const text = document.createElementNS(svgNS, "text");
-        text.setAttribute("x", (x1 + x2) / 2 + (options.labelOffsetX || 12));
-        text.setAttribute("y", (y1 + y2) / 2 + (options.labelOffsetY || -12));
-        text.setAttribute("fill", options.labelColor || "#D32F2F");
-        text.setAttribute("font-size", "16px");
-        text.setAttribute("font-weight", "bold");
-        text.textContent = options.label;
-        svg.appendChild(text);
-    }
-    return line;
-}
-
-function createLabel(svg, id, x, y, text) {
-    const label = document.createElementNS(svgNS, "text");
-    label.setAttribute("id", id);
-    label.setAttribute("x", x);
-    label.setAttribute("y", y);
-    label.setAttribute("text-anchor", "middle");
-    label.setAttribute("alignment-baseline", "middle");
-    label.textContent = text;
-    svg.appendChild(label);
-    return label;
-}
-
-function createDetailedDNAStrands(svg, idPrefix, x_center, y_offset, overall_height, numSegments = 10) {
-    const group = document.createElementNS(svgNS, 'g');
-    group.setAttribute('id', `${idPrefix}-dna-helix`);
-    svg.appendChild(group);
-
-    const amplitude = 40, frequency = 0.025, segmentStep = 2;
-    const backboneColorBlue = '#007bff', backboneColorRed = '#dc3545';
-    const adenineColor = '#F08080', thymineColor = '#F5D67D', guanineColor = '#58D68D', cytosineColor = '#5DADE2', hBondColor = '#BDC3C7';
-    const backboneWidth = 5, baseRectWidthPurine = 18, baseRectHeightPurine = 10, baseRectWidthPyrimidine = 14, baseRectHeightPyrimidine = 10, baseFontSize = "8px";
-    const allElements = [];
-    const sequence = ['A', 'T', 'G', 'C', 'G', 'T', 'A', 'C', 'G', 'A'];
-    const numBasePairs = sequence.length;
-    const basePairSpacing = overall_height / (numBasePairs + 1);
-
-    const strandBlue = document.createElementNS(svgNS, 'path');
-    const strandRed = document.createElementNS(svgNS, 'path');
-    let dBlue = '', dRed = '';
-    const startY = y_offset;
-    const endY = y_offset + overall_height;
-    for (let currentY = startY; currentY <= endY; currentY += segmentStep) {
-        const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
-        const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
-        if (currentY === startY) {
-            dBlue += `M${xBlue},${currentY}`;
-            dRed += `M${xRed},${currentY}`;
-        } else {
-            dBlue += ` L${xBlue},${currentY}`;
-            dRed += ` L${xRed},${currentY}`;
-        }
-    }
-    strandBlue.setAttribute('d', dBlue);
-    strandBlue.setAttribute('stroke', backboneColorBlue);
-    strandBlue.setAttribute('stroke-width', backboneWidth);
-    strandBlue.setAttribute('fill', 'none');
-    group.appendChild(strandBlue);
-    allElements.push(strandBlue);
-
-    strandRed.setAttribute('d', dRed);
-    strandRed.setAttribute('stroke', backboneColorRed);
-    strandRed.setAttribute('stroke-width', backboneWidth);
-    strandRed.setAttribute('fill', 'none');
-    group.appendChild(strandRed);
-    allElements.push(strandRed);
-
-    const fivePrimeBlue = createLabel(svg, `${idPrefix}-5pb`, x_center - amplitude - 15, startY, "5'");
-    const threePrimeBlue = createLabel(svg, `${idPrefix}-3pb`, x_center - amplitude * Math.cos(frequency * overall_height) - 15, endY + 15, "3'");
-    const threePrimeRed = createLabel(svg, `${idPrefix}-3pr`, x_center - amplitude * Math.cos(Math.PI) + 15, startY, "3'");
-    const fivePrimeRed = createLabel(svg, `${idPrefix}-5pr`, x_center - amplitude * Math.cos(frequency * overall_height + Math.PI) + 15, endY + 15, "5'");
-    allElements.push(fivePrimeBlue, threePrimeBlue, threePrimeRed, fivePrimeRed);
-
-    for (let i = 0; i < numBasePairs; i++) {
-        const currentY = y_offset + (i + 1) * basePairSpacing;
-        const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
-        const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
-
-        const baseTypeStrand1 = sequence[i];
-        let baseTypeStrand2, color1, color2, width1, height1, width2, height2, label1, label2;
-        switch (baseTypeStrand1) {
-            case 'A':
-                baseTypeStrand2 = 'T'; color1 = adenineColor; color2 = thymineColor;
-                width1 = baseRectWidthPurine; height1 = baseRectHeightPurine;
-                width2 = baseRectWidthPyrimidine; height2 = baseRectHeightPyrimidine;
-                label1 = 'A'; label2 = 'T';
-                break;
-            case 'T':
-                baseTypeStrand2 = 'A'; color1 = thymineColor; color2 = adenineColor;
-                width1 = baseRectWidthPyrimidine; height1 = baseRectHeightPyrimidine;
-                width2 = baseRectWidthPurine; height2 = baseRectHeightPurine;
-                label1 = 'T'; label2 = 'A';
-                break;
-            case 'G':
-                baseTypeStrand2 = 'C'; color1 = guanineColor; color2 = cytosineColor;
-                width1 = baseRectWidthPurine; height1 = baseRectHeightPurine;
-                width2 = baseRectWidthPyrimidine; height2 = baseRectHeightPyrimidine;
-                label1 = 'G'; label2 = 'C';
-                break;
-            case 'C':
-                baseTypeStrand2 = 'G'; color1 = cytosineColor; color2 = guanineColor;
-                width1 = baseRectWidthPyrimidine; height1 = baseRectHeightPyrimidine;
-                width2 = baseRectWidthPurine; height2 = baseRectHeightPurine;
-                label1 = 'C'; label2 = 'G';
-                break;
-        }
-
-        const base1 = document.createElementNS(svgNS, 'rect');
-        base1.setAttribute('id', `${idPrefix}-base1-${i}`);
-        base1.setAttribute('x', xBlue - width1/2);
-        base1.setAttribute('y', currentY - height1/2);
-        base1.setAttribute('width', width1);
-        base1.setAttribute('height', height1);
-        base1.setAttribute('fill', color1);
-        base1.setAttribute('rx', 2); base1.setAttribute('ry', 2);
-        group.appendChild(base1);
-        allElements.push(base1);
-
-        const baseLabel1 = createLabel(svg, `${idPrefix}-b1label-${i}`, xBlue, currentY + 2, label1);
-        allElements.push(baseLabel1);
-
-        const base2 = document.createElementNS(svgNS, 'rect');
-        base2.setAttribute('id', `${idPrefix}-base2-${i}`);
-        base2.setAttribute('x', xRed - width2/2);
-        base2.setAttribute('y', currentY - height2/2);
-        base2.setAttribute('width', width2);
-        base2.setAttribute('height', height2);
-        base2.setAttribute('fill', color2);
-        base2.setAttribute('rx', 2); base2.setAttribute('ry', 2);
-        group.appendChild(base2);
-        allElements.push(base2);
-
-        const baseLabel2 = createLabel(svg, `${idPrefix}-b2label-${i}`, xRed, currentY + 2, label2);
-        allElements.push(baseLabel2);
-
-        const hBond = document.createElementNS(svgNS, 'line');
-        hBond.setAttribute('x1', xBlue);
-        hBond.setAttribute('y1', currentY);
-        hBond.setAttribute('x2', xRed);
-        hBond.setAttribute('y2', currentY);
-        hBond.setAttribute('stroke', hBondColor);
-        hBond.setAttribute('stroke-width', '2');
-        group.appendChild(hBond);
-        allElements.push(hBond);
-
-        if (baseTypeStrand1 === 'G') {
-            base1.dataset.n7x = xBlue + (width1 / 2) * 0.6;
-            base1.dataset.n7y = currentY;
-        }
-        if (baseTypeStrand2 === 'G') {
-            base2.dataset.n7x = xRed - (width2 / 2) * 0.6;
-            base2.dataset.n7y = currentY;
-        }
-    }
-
-    return { group, elements: allElements, path1: strandBlue, path2: strandRed };
-}
-
-// --- Animation Control ---
-
-const stepExplanations = [
-    "Cyclophosphamide is a prodrug that is activated in the liver. The structure is shown and labeled.",
-    "Cytochrome P450 enzymes convert cyclophosphamide into 4-hydroxycyclophosphamide (OHCP) as seen by the new hydroxyl group.",
-    "4-hydroxycyclophosphamide can tautomerize to aldophosphamide, shown here with the new aldehyde group (CHO) at the bottom.",
-    "Aldophosphamide decomposes to phosphoramide mustard (PM) and acrolein. Both structures are shown.",
-    "Phosphoramide mustard (PM) forms a covalent bond with the N7 atom of guanine (G) in DNA.",
-    "PM can cross-link two guanine (G) bases on DNA, preventing replication and leading to cell death."
-];
-
-const improvedAnimations = [
-    function() {
-        clearSVG('ox-animation');
-        const svg = document.getElementById('ox-animation');
-        drawCyclophosphamideStructure(svg, 60, 60, 1.0);
-        bringMoleculesToFront(svg);
-    },
-    function() {
-        clearSVG('ox-animation');
-        const svg = document.getElementById('ox-animation');
-        drawOHCPStructure(svg, 60, 60, 1.0);
-        bringMoleculesToFront(svg);
-    },
-    function() {
-        clearSVG('ox-animation');
-        const svg = document.getElementById('ox-animation');
-        drawAldophosphamideStructure(svg, 60, 60, 1.0);
-        bringMoleculesToFront(svg);
-    },
-    function() {
-        clearSVG('ox-animation');
-        const svg = document.getElementById('ox-animation');
-        drawPMStructure(svg, 80, 90, 1.0);
-        drawAcroleinStructure(svg, 400, 90, 1.0);
-        bringMoleculesToFront(svg);
-    },
-    function() {
-        clearSVG('ox-animation');
-        const svg = document.getElementById('ox-animation');
-        drawPMStructure(svg, 110, 130, 0.9);
-        const dnaData = createDetailedDNAStrands(svg, 'dna-ox', 600, 60, 260, 10);
-        let g1 = null;
-        for (let el of dnaData.elements) {
-            if (el.tagName === "rect" && el.dataset.n7x && el.dataset.n7y) {
-                g1 = {x: parseFloat(el.dataset.n7x), y: parseFloat(el.dataset.n7y)};
-                break;
-            }
-        }
-        if (g1) {
-            createBond(svg, 'pm-dna', 170, 175, g1.x, g1.y, "#FBC02D", 5, {glow: true});
-        }
-        bringMoleculesToFront(svg);
-    },
-    function() {
-        clearSVG('ox-animation');
-        const svg = document.getElementById('ox-animation');
-        const dnaData = createDetailedDNAStrands(svg, 'dna-ox', 400, 60, 260, 10);
-        let guanines = [];
-        for (let el of dnaData.elements) {
-            if (el.tagName === "rect" && el.dataset.n7x && el.dataset.n7y) {
-                guanines.push({x: parseFloat(el.dataset.n7x), y: parseFloat(el.dataset.n7y)});
-            }
-        }
-        if (guanines.length >= 2) {
-            createBond(
-                svg, 'crosslink',
-                guanines[0].x, guanines[0].y,
-                guanines[1].x, guanines[1].y,
-                "#D32F2F", 9,
-                {
-                    dash: true,
-                    label: "DNA Cross-Link",
-                    labelColor: "#D32F2F",
-                    glow: true,
-                    labelOffsetX: 24,
-                    labelOffsetY: -24
-                }
-            );
-        }
-        bringMoleculesToFront(svg);
-    }
-];
-
-// Overwrite clearSVG so addGlowFilter is always called
-function clearSVG(id) {
-    const svg = document.getElementById(id);
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    addGlowFilter(svg);
-}
-
-let currentStep = 0;
-function updateExplanation() {
-    document.getElementById('ox-explanation').innerText = stepExplanations[currentStep];
-    document.getElementById('ox-step-title').innerText = "Oxazaphosphorine: Step " + (currentStep + 1);
-}
-function showStep() {
-    improvedAnimations[currentStep]();
-    updateExplanation();
-    document.getElementById('ox-prev-btn').disabled = currentStep === 0;
-    document.getElementById('ox-next-btn').disabled = currentStep === improvedAnimations.length-1;
-}
-function navigateTo(action) {
-    if (action === "next" && currentStep < improvedAnimations.length-1) currentStep++;
-    else if (action === "previous" && currentStep > 0) currentStep--;
-    else if (action === "restart") currentStep = 0;
-    showStep();
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-    showStep();
-
-    // Sidebar logic (unchanged)
-    const sidebar = document.querySelector(".sidebar");
-    const sidebarToggle = document.querySelector('.sidebar-toggle');
-    const navLinks = document.querySelectorAll(".nav-links > li > a");
-    const hasSubmenuItems = document.querySelectorAll('.has-submenu');
-    const subLinks = document.querySelectorAll('.sub-links a');
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', function () {
-            sidebar.classList.toggle('active');
-            localStorage.setItem('sidebarExpanded', sidebar.classList.contains('active'));
-        });
-        if (localStorage.getItem('sidebarExpanded') === 'true') {
-            sidebar.classList.add('active');
-        }
-    }
-    hasSubmenuItems.forEach(item => {
-        const link = item.querySelector('a');
-        if (link) {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                item.classList.toggle('active');
+        const svgNS = "http://www.w3.org/2000/svg";
+        
+        // --- Helper: bring molecules to front ---
+        function bringMoleculesToFront(svg) {
+            // Bring all molecule <g> groups and big circles to the end of SVG (top)
+            Array.from(svg.querySelectorAll('g[id^="atom-"],g[id*="Molecule"],g[id*="molecule"]')).forEach(g => svg.appendChild(g));
+            Array.from(svg.querySelectorAll('circle')).forEach(c => {
+                if (parseFloat(c.getAttribute("r")) >= 14) svg.appendChild(c);
+            });
+            Array.from(svg.querySelectorAll('text')).forEach(t => {
+                if (["Cyclophosphamide", "Aldophosphamide", "Acrolein", "Phosphoramide Mustard", "4-hydroxycyclophosphamide"].includes(t.textContent)) svg.appendChild(t);
             });
         }
-    });
-    subLinks.forEach(subLink => {
-        subLink.addEventListener('click', () => {
-            sidebar.classList.remove("active");
-            localStorage.setItem('sidebarExpanded', 'false');
-        });
-    });
-    navLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            if (!link.parentElement.classList.contains('has-submenu')) {
-                sidebar.classList.remove("active");
-                localStorage.setItem('sidebarExpanded', 'false');
+        
+        function addGlowFilter(svg) {
+            let existing = svg.querySelector('defs#glow-defs');
+            if (existing) return;
+            let defs = document.createElementNS(svgNS, 'defs');
+            defs.setAttribute('id', 'glow-defs');
+            let filter = document.createElementNS(svgNS, 'filter');
+            filter.setAttribute('id', 'glow');
+            filter.setAttribute('x', '-50%');
+            filter.setAttribute('y', '-50%');
+            filter.setAttribute('width', '200%');
+            filter.setAttribute('height', '200%');
+            let feDropShadow = document.createElementNS(svgNS, 'feDropShadow');
+            feDropShadow.setAttribute('dx', '0');
+            feDropShadow.setAttribute('dy', '0');
+            feDropShadow.setAttribute('stdDeviation', '4');
+            feDropShadow.setAttribute('flood-color', '#FFD600');
+            feDropShadow.setAttribute('flood-opacity', '0.9');
+            filter.appendChild(feDropShadow);
+            defs.appendChild(filter);
+            svg.appendChild(defs);
+        }
+        
+        const AtomColors = {
+            'C': '#444', 'O': '#1976D2', 'N': '#43A047',
+            'P': '#D81B60', 'Cl': '#FFA726', 'H': '#BBB'
+        };
+        
+        function labelStructure(svg, label, x, y, color="#333") {
+            const t = document.createElementNS(svgNS, "text");
+            t.setAttribute("x", x);
+            t.setAttribute("y", y);
+            t.setAttribute("text-anchor", "middle");
+            t.setAttribute("font-size", "20px");
+            t.setAttribute("font-weight", "bold");
+            t.setAttribute("fill", color);
+            t.textContent = label;
+            svg.appendChild(t);
+        }
+        
+        function drawCyclophosphamideStructure(svg, xOffset, yOffset, scale=1.2) {
+            function atom(x, y, label, colorKey, atomId) {
+                const group = document.createElementNS(svgNS, "g");
+                group.setAttribute("id", "atom-"+atomId);
+                const circle = document.createElementNS(svgNS, "circle");
+                circle.setAttribute("cx", x);
+                circle.setAttribute("cy", y);
+                circle.setAttribute("r", 14 * scale);
+                circle.setAttribute("fill", AtomColors[colorKey] || "#bbb");
+                circle.setAttribute("stroke", "#333");
+                circle.setAttribute("stroke-width", "2");
+                group.appendChild(circle);
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", x);
+                text.setAttribute("y", y+6*scale);
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("font-size", 18*scale);
+                text.setAttribute("fill", "#fff");
+                text.setAttribute("font-weight", "bold");
+                text.textContent = label;
+                group.appendChild(text);
+                svg.appendChild(group);
             }
-        });
+            function bond(x1, y1, x2, y2, thick=false) {
+                const line = document.createElementNS(svgNS, "line");
+                line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+                line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+                line.setAttribute("stroke", "#888");
+                line.setAttribute("stroke-width", thick ? 6 : 3);
+                svg.appendChild(line);
+            }
+            const P = [xOffset+110, yOffset+90];
+            const O1 = [xOffset+170, yOffset+70];
+            const O2 = [xOffset+165, yOffset+130];
+            const N1 = [xOffset+55, yOffset+50];
+            const N2 = [xOffset+55, yOffset+130];
+            const Cl1 = [xOffset+20, yOffset+30];
+            const Cl2 = [xOffset+20, yOffset+150];
+            const C1 = [xOffset+85, yOffset+40];
+            const C2 = [xOffset+85, yOffset+140];
+            const backbone = [xOffset+110, yOffset+190];
+            bond(...P, ...O1); bond(...P, ...O2); bond(...P, ...N1, true); bond(...P, ...N2, true);
+            bond(...N1, ...Cl1); bond(...N2, ...Cl2); bond(...N1, ...C1); bond(...N2, ...C2);
+            bond(...C1, ...backbone); bond(...C2, ...backbone);
+            atom(...P, 'P', 'P', 'P');
+            atom(...O1, 'O', 'O', 'O1');
+            atom(...O2, 'O', 'O', 'O2');
+            atom(...N1, 'N', 'N', 'N1');
+            atom(...N2, 'N', 'N', 'N2');
+            atom(...Cl1, 'Cl', 'Cl', 'Cl1');
+            atom(...Cl2, 'Cl', 'Cl', 'Cl2');
+            atom(...C1, 'C', 'C', 'C1');
+            atom(...C2, 'C', 'C', 'C2');
+            atom(...backbone, 'C', 'C', 'CB');
+            labelStructure(svg, "Cyclophosphamide", xOffset+110, yOffset+270, "#1976D2");
+        }
+        
+        function drawOHCPStructure(svg, x, y, scale=1.2) {
+            drawCyclophosphamideStructure(svg, x, y, scale);
+            const ox = x+180, oy = y+40;
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", x+170); line.setAttribute("y1", y+70);
+            line.setAttribute("x2", ox); line.setAttribute("y2", oy);
+            line.setAttribute("stroke", "#1976D2"); line.setAttribute("stroke-width", 3);
+            svg.appendChild(line);
+            const circle = document.createElementNS(svgNS, "circle");
+            circle.setAttribute("cx", ox); circle.setAttribute("cy", oy);
+            circle.setAttribute("r", 10);
+            circle.setAttribute("fill", AtomColors.O);
+            svg.appendChild(circle);
+            const textO = document.createElementNS(svgNS, "text");
+            textO.setAttribute("x", ox); textO.setAttribute("y", oy+5);
+            textO.setAttribute("text-anchor", "middle");
+            textO.setAttribute("font-size", "14px");
+            textO.setAttribute("fill", "#fff");
+            textO.setAttribute("font-weight", "bold");
+            textO.textContent = "O";
+            svg.appendChild(textO);
+            const hx = ox+18, hy = oy-6;
+            const hline = document.createElementNS(svgNS, "line");
+            hline.setAttribute("x1", ox); hline.setAttribute("y1", oy);
+            hline.setAttribute("x2", hx); hline.setAttribute("y2", hy);
+            hline.setAttribute("stroke", "#BBB"); hline.setAttribute("stroke-width", 2);
+            svg.appendChild(hline);
+            const h = document.createElementNS(svgNS, "text");
+            h.setAttribute("x", hx); h.setAttribute("y", hy-2);
+            h.setAttribute("font-size", "12px");
+            h.setAttribute("fill", AtomColors.H);
+            h.textContent = "H";
+            svg.appendChild(h);
+            labelStructure(svg, "4-hydroxycyclophosphamide", x+110, y+290, "#43A047");
+        }
+        
+        function drawAldophosphamideStructure(svg, x, y, scale=1.2) {
+            drawCyclophosphamideStructure(svg, x, y, scale);
+            const ax = x+110, ay = y+210;
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", x+110); line.setAttribute("y1", y+190);
+            line.setAttribute("x2", ax); line.setAttribute("y2", ay);
+            line.setAttribute("stroke", "#FFA726"); line.setAttribute("stroke-width", 3);
+            svg.appendChild(line);
+            const text = document.createElementNS(svgNS, "text");
+            text.setAttribute("x", ax+18); text.setAttribute("y", ay+6);
+            text.setAttribute("font-size", "15px");
+            text.setAttribute("fill", "#FFA726");
+            text.textContent = "CHO";
+            svg.appendChild(text);
+            labelStructure(svg, "Aldophosphamide", x+110, y+290, "#FFA726");
+        }
+        
+        function drawPMStructure(svg, x, y, scale=1.2) {
+    // Central P atom
+    const P = {x: x+110, y: y+90};
+    // Oxygen (double bond)
+    const O = {x: P.x+35, y: P.y-40};
+    // Two amine nitrogens
+    const N1 = {x: P.x-60, y: P.y-35};
+    const N2 = {x: P.x-60, y: P.y+35};
+    // NH2 group
+    const NH2 = {x: P.x+35, y: P.y+40};
+    // Carbon arms (N–CH2–CH2–Cl)
+    const arm1_C1 = {x: N1.x-36, y: N1.y-15};
+    const arm1_C2 = {x: N1.x-66, y: N1.y-15};
+    const arm1_Cl = {x: N1.x-90, y: N1.y-10};
+    const arm2_C1 = {x: N2.x-36, y: N2.y+15};
+    const arm2_C2 = {x: N2.x-66, y: N2.y+15};
+    const arm2_Cl = {x: N2.x-90, y: N2.y+10};
+
+    // P–O double bond
+    let line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", P.x); line.setAttribute("y1", P.y);
+    line.setAttribute("x2", O.x); line.setAttribute("y2", O.y);
+    line.setAttribute("stroke", AtomColors.O); line.setAttribute("stroke-width", 3);
+    svg.appendChild(line);
+    // P–N1, P–N2, P–NH2
+    ["N1", "N2"].forEach((n, i) => {
+        let nPos = i === 0 ? N1 : N2;
+        let l = document.createElementNS(svgNS, "line");
+        l.setAttribute("x1", P.x); l.setAttribute("y1", P.y);
+        l.setAttribute("x2", nPos.x); l.setAttribute("y2", nPos.y);
+        l.setAttribute("stroke", AtomColors.N); l.setAttribute("stroke-width", 3);
+        svg.appendChild(l);
+    });
+    line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", P.x); line.setAttribute("y1", P.y);
+    line.setAttribute("x2", NH2.x); line.setAttribute("y2", NH2.y);
+    line.setAttribute("stroke", AtomColors.N); line.setAttribute("stroke-width", 3);
+    svg.appendChild(line);
+
+    // N1/N2 arms
+    [[N1, arm1_C1, arm1_C2, arm1_Cl], [N2, arm2_C1, arm2_C2, arm2_Cl]].forEach(([n, c1, c2, cl]) => {
+        let l1 = document.createElementNS(svgNS, "line");
+        l1.setAttribute("x1", n.x); l1.setAttribute("y1", n.y);
+        l1.setAttribute("x2", c1.x); l1.setAttribute("y2", c1.y);
+        l1.setAttribute("stroke", AtomColors.C); l1.setAttribute("stroke-width", 3);
+        svg.appendChild(l1);
+        let l2 = document.createElementNS(svgNS, "line");
+        l2.setAttribute("x1", c1.x); l2.setAttribute("y1", c1.y);
+        l2.setAttribute("x2", c2.x); l2.setAttribute("y2", c2.y);
+        l2.setAttribute("stroke", AtomColors.C); l2.setAttribute("stroke-width", 3);
+        svg.appendChild(l2);
+        let l3 = document.createElementNS(svgNS, "line");
+        l3.setAttribute("x1", c2.x); l3.setAttribute("y1", c2.y);
+        l3.setAttribute("x2", cl.x); l3.setAttribute("y2", cl.y);
+        l3.setAttribute("stroke", AtomColors.Cl); l3.setAttribute("stroke-width", 3);
+        svg.appendChild(l3);
     });
 
-    document.getElementById('ox-prev-btn').onclick = () => navigateTo("previous");
-    document.getElementById('ox-next-btn').onclick = () => navigateTo("next");
-    document.getElementById('ox-restart-btn').onclick = () => navigateTo("restart");
-});
-</script>
+    // Atoms: P
+    let text = document.createElementNS(svgNS, "text");
+    text.setAttribute("x", P.x); text.setAttribute("y", P.y+7);
+    text.setAttribute("font-size", "20px");
+    text.setAttribute("fill", AtomColors.P);
+    text.setAttribute("font-weight", "bold");
+    text.setAttribute("text-anchor", "middle");
+    text.textContent = "P";
+    svg.appendChild(text);
+    // Oxygen
+    text = document.createElementNS(svgNS, "text");
+    text.setAttribute("x", O.x+12); text.setAttribute("y", O.y-2);
+    text.setAttribute("font-size", "15px");
+    text.setAttribute("fill", AtomColors.O);
+    text.textContent = "O";
+    svg.appendChild(text);
+    // NH2
+    text = document.createElementNS(svgNS, "text");
+    text.setAttribute("x", NH2.x+12); text.setAttribute("y", NH2.y+2);
+    text.setAttribute("font-size", "15px");
+    text.setAttribute("fill", AtomColors.N);
+    text.textContent = "NH₂";
+    svg.appendChild(text);
+    // N1/N2
+    [N1, N2].forEach((n, i) => {
+        let t = document.createElementNS(svgNS, "text");
+        t.setAttribute("x", n.x-10); t.setAttribute("y", n.y-2 + (i===1?14:0));
+        t.setAttribute("font-size", "16px");
+        t.setAttribute("fill", AtomColors.N);
+        t.textContent = "N";
+        svg.appendChild(t);
+    });
+    // Cls and CH2 labels on arms
+    [[arm1_C1, arm1_C2, arm1_Cl], [arm2_C1, arm2_C2, arm2_Cl]].forEach(([c1, c2, cl]) => {
+        let t = document.createElementNS(svgNS, "text");
+        t.setAttribute("x", cl.x-6); t.setAttribute("y", cl.y+6);
+        t.setAttribute("font-size", "15px");
+        t.setAttribute("fill", AtomColors.Cl);
+        t.textContent = "Cl";
+        svg.appendChild(t);
+
+        t = document.createElementNS(svgNS, "text");
+        t.setAttribute("x", c1.x-6); t.setAttribute("y", c1.y-8);
+        t.setAttribute("font-size", "13px");
+        t.setAttribute("fill", AtomColors.C);
+        t.textContent = "CH₂";
+        svg.appendChild(t);
+
+        t = document.createElementNS(svgNS, "text");
+        t.setAttribute("x", c2.x-6); t.setAttribute("y", c2.y-8);
+        t.setAttribute("font-size", "13px");
+        t.setAttribute("fill", AtomColors.C);
+        t.textContent = "CH₂";
+        svg.appendChild(t);
+    });
+
+    labelStructure(svg, "Phosphoramide Mustard", x+110, y+190, "#D81B60");
+}
+function drawAcroleinStructure(svg, x, y, scale=1.2) {
+    // Atom positions with realistic bond angles (sp2 ~120°)
+    const c1 = {x: x,          y: y};         // CH2
+    const c2 = {x: x+50,       y: y-25};      // CH (middle)
+    const c3 = {x: x+100,      y: y};         // CHO (aldehyde carbon)
+
+    // Bonds
+    // C1=C2 (double bond, two close parallel lines)
+    for (let i = -2; i <= 2; i += 4) {
+        let line = document.createElementNS(svgNS, "line");
+        line.setAttribute("x1", c1.x); line.setAttribute("y1", c1.y + i);
+        line.setAttribute("x2", c2.x); line.setAttribute("y2", c2.y + i);
+        line.setAttribute("stroke", "#444"); line.setAttribute("stroke-width", 2.2);
+        svg.appendChild(line);
+    }
+    // C2–C3 (single bond)
+    let line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", c2.x); line.setAttribute("y1", c2.y);
+    line.setAttribute("x2", c3.x); line.setAttribute("y2", c3.y);
+    line.setAttribute("stroke", "#444"); line.setAttribute("stroke-width", 2.2);
+    svg.appendChild(line);
+
+    // C3=O (carbonyl double bond, two parallel lines, up/right)
+    const ox = c3.x + 28, oy = c3.y - 34;
+    for (let i = -2; i <= 2; i += 4) {
+        let oline = document.createElementNS(svgNS, "line");
+        oline.setAttribute("x1", c3.x + i); oline.setAttribute("y1", c3.y + i);
+        oline.setAttribute("x2", ox + i); oline.setAttribute("y2", oy + i);
+        oline.setAttribute("stroke", AtomColors.O); oline.setAttribute("stroke-width", 2.2);
+        svg.appendChild(oline);
+    }
+
+    // C3–H (aldehyde hydrogen, single bond down/right)
+    line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", c3.x); line.setAttribute("y1", c3.y);
+    line.setAttribute("x2", c3.x+20); line.setAttribute("y2", c3.y+32);
+    line.setAttribute("stroke", AtomColors.H); line.setAttribute("stroke-width", 1.7);
+    svg.appendChild(line);
+
+    // Hydrogens on C1 (CH2), one up, one down
+    let h1 = document.createElementNS(svgNS, "text");
+    h1.setAttribute("x", c1.x - 18); h1.setAttribute("y", c1.y - 13);
+    h1.setAttribute("font-size", "15px");
+    h1.setAttribute("fill", AtomColors.H);
+    h1.textContent = "H";
+    svg.appendChild(h1);
+
+    let h2 = document.createElementNS(svgNS, "text");
+    h2.setAttribute("x", c1.x - 18); h2.setAttribute("y", c1.y + 17);
+    h2.setAttribute("font-size", "15px");
+    h2.setAttribute("fill", AtomColors.H);
+    h2.textContent = "H";
+    svg.appendChild(h2);
+
+    // Hydrogen on C2 (CH)
+    let hc2 = document.createElementNS(svgNS, "text");
+    hc2.setAttribute("x", c2.x); hc2.setAttribute("y", c2.y - 18);
+    hc2.setAttribute("font-size", "15px");
+    hc2.setAttribute("fill", AtomColors.H);
+    hc2.textContent = "H";
+    svg.appendChild(hc2);
+
+
+    // Oxygen at end of double bond
+    let otext = document.createElementNS(svgNS, "text");
+    otext.setAttribute("x", ox + 10); otext.setAttribute("y", oy - 2);
+    otext.setAttribute("font-size", "15px");
+    otext.setAttribute("fill", AtomColors.O);
+    otext.textContent = "O";
+    svg.appendChild(otext);
+
+    // H (aldehyde hydrogen)
+    let hcho = document.createElementNS(svgNS, "text");
+    hcho.setAttribute("x", c3.x+26); hcho.setAttribute("y", c3.y+44);
+    hcho.setAttribute("font-size", "15px");
+    hcho.setAttribute("fill", AtomColors.H);
+    hcho.textContent = "H";
+    svg.appendChild(hcho);
+
+    labelStructure(svg, "Acrolein", x+50, y+60, "#607D8B");
+}
+      function createBond(svg, id, x1, y1, x2, y2, color = "#FBC02D", width = 4, options = {}) {
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("id", id);
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("stroke", color);
+            line.setAttribute("stroke-width", width);
+            if (options.dash) line.setAttribute("stroke-dasharray", "10,6");
+            if (options.glow) line.setAttribute("filter", "url(#glow)");
+            svg.appendChild(line);
+            if (options.label) {
+                const text = document.createElementNS(svgNS, "text");
+                text.setAttribute("x", (x1 + x2) / 2 + (options.labelOffsetX || 12));
+                text.setAttribute("y", (y1 + y2) / 2 + (options.labelOffsetY || -12));
+                text.setAttribute("fill", options.labelColor || "#D32F2F");
+                text.setAttribute("font-size", "16px");
+                text.setAttribute("font-weight", "bold");
+                text.textContent = options.label;
+                svg.appendChild(text);
+            }
+            return line;
+        }
+        
+        function createLabel(svg, id, x, y, text) {
+            const label = document.createElementNS(svgNS, "text");
+            label.setAttribute("id", id);
+            label.setAttribute("x", x);
+            label.setAttribute("y", y);
+            label.setAttribute("text-anchor", "middle");
+            label.setAttribute("alignment-baseline", "middle");
+            label.textContent = text;
+            svg.appendChild(label);
+            return label;
+        }
+        
+        function createDetailedDNAStrands(svg, idPrefix, x_center, y_offset, overall_height, numSegments = 10) {
+            const group = document.createElementNS(svgNS, 'g');
+            group.setAttribute('id', `${idPrefix}-dna-helix`);
+            svg.appendChild(group);
+        
+            const amplitude = 40, frequency = 0.025, segmentStep = 2;
+            const backboneColorBlue = '#007bff', backboneColorRed = '#dc3545';
+            const adenineColor = '#F08080', thymineColor = '#F5D67D', guanineColor = '#58D68D', cytosineColor = '#5DADE2', hBondColor = '#BDC3C7';
+            const backboneWidth = 5, baseRectWidthPurine = 18, baseRectHeightPurine = 10, baseRectWidthPyrimidine = 14, baseRectHeightPyrimidine = 10, baseFontSize = "8px";
+            const allElements = [];
+            const sequence = ['A', 'T', 'G', 'C', 'G', 'T', 'A', 'C', 'G', 'A'];
+            const numBasePairs = sequence.length;
+            const basePairSpacing = overall_height / (numBasePairs + 1);
+        
+            const strandBlue = document.createElementNS(svgNS, 'path');
+            const strandRed = document.createElementNS(svgNS, 'path');
+            let dBlue = '', dRed = '';
+            const startY = y_offset;
+            const endY = y_offset + overall_height;
+            for (let currentY = startY; currentY <= endY; currentY += segmentStep) {
+                const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
+                const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
+                if (currentY === startY) {
+                    dBlue += `M${xBlue},${currentY}`;
+                    dRed += `M${xRed},${currentY}`;
+                } else {
+                    dBlue += ` L${xBlue},${currentY}`;
+                    dRed += ` L${xRed},${currentY}`;
+                }
+            }
+            strandBlue.setAttribute('d', dBlue);
+            strandBlue.setAttribute('stroke', backboneColorBlue);
+            strandBlue.setAttribute('stroke-width', backboneWidth);
+            strandBlue.setAttribute('fill', 'none');
+            group.appendChild(strandBlue);
+            allElements.push(strandBlue);
+        
+            strandRed.setAttribute('d', dRed);
+            strandRed.setAttribute('stroke', backboneColorRed);
+            strandRed.setAttribute('stroke-width', backboneWidth);
+            strandRed.setAttribute('fill', 'none');
+            group.appendChild(strandRed);
+            allElements.push(strandRed);
+        
+            const fivePrimeBlue = createLabel(svg, `${idPrefix}-5pb`, x_center - amplitude - 15, startY, "5'");
+            const threePrimeBlue = createLabel(svg, `${idPrefix}-3pb`, x_center - amplitude * Math.cos(frequency * overall_height) - 15, endY + 15, "3'");
+            const threePrimeRed = createLabel(svg, `${idPrefix}-3pr`, x_center - amplitude * Math.cos(Math.PI) + 15, startY, "3'");
+            const fivePrimeRed = createLabel(svg, `${idPrefix}-5pr`, x_center - amplitude * Math.cos(frequency * overall_height + Math.PI) + 15, endY + 15, "5'");
+            allElements.push(fivePrimeBlue, threePrimeBlue, threePrimeRed, fivePrimeRed);
+        
+            for (let i = 0; i < numBasePairs; i++) {
+                const currentY = y_offset + (i + 1) * basePairSpacing;
+                const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
+                const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
+        
+                const baseTypeStrand1 = sequence[i];
+                let baseTypeStrand2, color1, color2, width1, height1, width2, height2, label1, label2;
+                switch (baseTypeStrand1) {
+                    case 'A':
+                        baseTypeStrand2 = 'T'; color1 = adenineColor; color2 = thymineColor;
+                        width1 = baseRectWidthPurine; height1 = baseRectHeightPurine;
+                        width2 = baseRectWidthPyrimidine; height2 = baseRectHeightPyrimidine;
+                        label1 = 'A'; label2 = 'T';
+                        break;
+                    case 'T':
+                        baseTypeStrand2 = 'A'; color1 = thymineColor; color2 = adenineColor;
+                        width1 = baseRectWidthPyrimidine; height1 = baseRectHeightPyrimidine;
+                        width2 = baseRectWidthPurine; height2 = baseRectHeightPurine;
+                        label1 = 'T'; label2 = 'A';
+                        break;
+                    case 'G':
+                        baseTypeStrand2 = 'C'; color1 = guanineColor; color2 = cytosineColor;
+                        width1 = baseRectWidthPurine; height1 = baseRectHeightPurine;
+                        width2 = baseRectWidthPyrimidine; height2 = baseRectHeightPyrimidine;
+                        label1 = 'G'; label2 = 'C';
+                        break;
+                    case 'C':
+                        baseTypeStrand2 = 'G'; color1 = cytosineColor; color2 = guanineColor;
+                        width1 = baseRectWidthPyrimidine; height1 = baseRectHeightPyrimidine;
+                        width2 = baseRectWidthPurine; height2 = baseRectHeightPurine;
+                        label1 = 'C'; label2 = 'G';
+                        break;
+                }
+        
+                const base1 = document.createElementNS(svgNS, 'rect');
+                base1.setAttribute('id', `${idPrefix}-base1-${i}`);
+                base1.setAttribute('x', xBlue - width1/2);
+                base1.setAttribute('y', currentY - height1/2);
+                base1.setAttribute('width', width1);
+                base1.setAttribute('height', height1);
+                base1.setAttribute('fill', color1);
+                base1.setAttribute('rx', 2); base1.setAttribute('ry', 2);
+                group.appendChild(base1);
+                allElements.push(base1);
+        
+                const baseLabel1 = createLabel(svg, `${idPrefix}-b1label-${i}`, xBlue, currentY + 2, label1);
+                allElements.push(baseLabel1);
+        
+                const base2 = document.createElementNS(svgNS, 'rect');
+                base2.setAttribute('id', `${idPrefix}-base2-${i}`);
+                base2.setAttribute('x', xRed - width2/2);
+                base2.setAttribute('y', currentY - height2/2);
+                base2.setAttribute('width', width2);
+                base2.setAttribute('height', height2);
+                base2.setAttribute('fill', color2);
+                base2.setAttribute('rx', 2); base2.setAttribute('ry', 2);
+                group.appendChild(base2);
+                allElements.push(base2);
+        
+                const baseLabel2 = createLabel(svg, `${idPrefix}-b2label-${i}`, xRed, currentY + 2, label2);
+                allElements.push(baseLabel2);
+        
+                const hBond = document.createElementNS(svgNS, 'line');
+                hBond.setAttribute('x1', xBlue);
+                hBond.setAttribute('y1', currentY);
+                hBond.setAttribute('x2', xRed);
+                hBond.setAttribute('y2', currentY);
+                hBond.setAttribute('stroke', hBondColor);
+                hBond.setAttribute('stroke-width', '2');
+                group.appendChild(hBond);
+                allElements.push(hBond);
+        
+                if (baseTypeStrand1 === 'G') {
+                    base1.dataset.n7x = xBlue + (width1 / 2) * 0.6;
+                    base1.dataset.n7y = currentY;
+                }
+                if (baseTypeStrand2 === 'G') {
+                    base2.dataset.n7x = xRed - (width2 / 2) * 0.6;
+                    base2.dataset.n7y = currentY;
+                }
+            }
+        
+            return { group, elements: allElements, path1: strandBlue, path2: strandRed };
+        }
+        
+        // --- Animation Control ---
+        
+        const stepExplanations = [
+            "Cyclophosphamide is a prodrug that is activated in the liver. The structure is shown and labeled.",
+            "Cytochrome P450 enzymes convert cyclophosphamide into 4-hydroxycyclophosphamide (OHCP) as seen by the new hydroxyl group.",
+            "4-hydroxycyclophosphamide can tautomerize to aldophosphamide, shown here with the new aldehyde group (CHO) at the bottom.",
+            "Aldophosphamide decomposes to phosphoramide mustard (PM) and acrolein. Both structures are shown.",
+            "Phosphoramide mustard (PM) forms a covalent bond with the N7 atom of guanine (G) in DNA.",
+            "PM can cross-link two guanine (G) bases on DNA, preventing replication and leading to cell death."
+        ];
+        
+        const improvedAnimations = [
+            function() {
+                clearSVG('ox-animation');
+                const svg = document.getElementById('ox-animation');
+                drawCyclophosphamideStructure(svg, 60, 60, 1.0);
+                bringMoleculesToFront(svg);
+            },
+            function() {
+                clearSVG('ox-animation');
+                const svg = document.getElementById('ox-animation');
+                drawOHCPStructure(svg, 60, 60, 1.0);
+                bringMoleculesToFront(svg);
+            },
+            function() {
+                clearSVG('ox-animation');
+                const svg = document.getElementById('ox-animation');
+                drawAldophosphamideStructure(svg, 60, 60, 1.0);
+                bringMoleculesToFront(svg);
+            },
+            function() {
+                clearSVG('ox-animation');
+                const svg = document.getElementById('ox-animation');
+                drawPMStructure(svg, 80, 90, 1.0);
+                drawAcroleinStructure(svg, 400, 90, 1.0);
+                bringMoleculesToFront(svg);
+            },
+            function() {
+                clearSVG('ox-animation');
+                const svg = document.getElementById('ox-animation');
+                drawPMStructure(svg, 110, 130, 0.9);
+                const dnaData = createDetailedDNAStrands(svg, 'dna-ox', 600, 60, 260, 10);
+                let g1 = null;
+                for (let el of dnaData.elements) {
+                    if (el.tagName === "rect" && el.dataset.n7x && el.dataset.n7y) {
+                        g1 = {x: parseFloat(el.dataset.n7x), y: parseFloat(el.dataset.n7y)};
+                        break;
+                    }
+                }
+                if (g1) {
+                    createBond(svg, 'pm-dna', 170, 175, g1.x, g1.y, "#FBC02D", 5, {glow: true});
+                }
+                bringMoleculesToFront(svg);
+            },
+            function() {
+                clearSVG('ox-animation');
+                const svg = document.getElementById('ox-animation');
+                const dnaData = createDetailedDNAStrands(svg, 'dna-ox', 400, 60, 260, 10);
+                let guanines = [];
+                for (let el of dnaData.elements) {
+                    if (el.tagName === "rect" && el.dataset.n7x && el.dataset.n7y) {
+                        guanines.push({x: parseFloat(el.dataset.n7x), y: parseFloat(el.dataset.n7y)});
+                    }
+                }
+                if (guanines.length >= 2) {
+                    createBond(
+                        svg, 'crosslink',
+                        guanines[0].x, guanines[0].y,
+                        guanines[1].x, guanines[1].y,
+                        "#D32F2F", 9,
+                        {
+                            dash: true,
+                            label: "DNA Cross-Link",
+                            labelColor: "#D32F2F",
+                            glow: true,
+                            labelOffsetX: 24,
+                            labelOffsetY: -24
+                        }
+                    );
+                }
+                bringMoleculesToFront(svg);
+            }
+        ];
+        
+        // Overwrite clearSVG so addGlowFilter is always called
+        function clearSVG(id) {
+            const svg = document.getElementById(id);
+            while (svg.firstChild) svg.removeChild(svg.firstChild);
+            addGlowFilter(svg);
+        }
+        
+        let currentStep = 0;
+        function updateExplanation() {
+            document.getElementById('ox-explanation').innerText = stepExplanations[currentStep];
+            document.getElementById('ox-step-title').innerText = "Oxazaphosphorine: Step " + (currentStep + 1);
+        }
+        function showStep() {
+            improvedAnimations[currentStep]();
+            updateExplanation();
+            document.getElementById('ox-prev-btn').disabled = currentStep === 0;
+            document.getElementById('ox-next-btn').disabled = currentStep === improvedAnimations.length-1;
+        }
+        function navigateTo(action) {
+            if (action === "next" && currentStep < improvedAnimations.length-1) currentStep++;
+            else if (action === "previous" && currentStep > 0) currentStep--;
+            else if (action === "restart") currentStep = 0;
+            showStep();
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            showStep();
+        
+            // Sidebar logic (unchanged)
+            const sidebar = document.querySelector(".sidebar");
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const navLinks = document.querySelectorAll(".nav-links > li > a");
+            const hasSubmenuItems = document.querySelectorAll('.has-submenu');
+            const subLinks = document.querySelectorAll('.sub-links a');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function () {
+                    sidebar.classList.toggle('active');
+                    localStorage.setItem('sidebarExpanded', sidebar.classList.contains('active'));
+                });
+                if (localStorage.getItem('sidebarExpanded') === 'true') {
+                    sidebar.classList.add('active');
+                }
+            }
+            hasSubmenuItems.forEach(item => {
+                const link = item.querySelector('a');
+                if (link) {
+                    link.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        item.classList.toggle('active');
+                    });
+                }
+            });
+            subLinks.forEach(subLink => {
+                subLink.addEventListener('click', () => {
+                    sidebar.classList.remove("active");
+                    localStorage.setItem('sidebarExpanded', 'false');
+                });
+            });
+            navLinks.forEach(link => {
+                link.addEventListener("click", () => {
+                    if (!link.parentElement.classList.contains('has-submenu')) {
+                        sidebar.classList.remove("active");
+                        localStorage.setItem('sidebarExpanded', 'false');
+                    }
+                });
+            });
+        
+            document.getElementById('ox-prev-btn').onclick = () => navigateTo("previous");
+            document.getElementById('ox-next-btn').onclick = () => navigateTo("next");
+            document.getElementById('ox-restart-btn').onclick = () => navigateTo("restart");
+        });
+        </script>
