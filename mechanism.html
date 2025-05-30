@@ -322,15 +322,14 @@ body { overflow-x: hidden; overflow-y: auto; margin: 0; }
                   <li><a href="agents.html">Summary</a></li>
                   <li><a href="nitrogen-mustards.html">Nitrogen Mustards</a></li>
                   <li><a href="oxazaphosphorines.html">Oxazaphosphorines</a></li>
-                  <li><a href="nitrosoureas.html">Nitrosourea</a></li>
                   <li><a href="mitomycin-c.html">Mitomycin C</a></li>
+                  <li><a href="nitrosoureas.html">Nitrosourea</a></li>
                 </ul>
               </li>
             <li><a href="references.html">References</a></li>
             <li><a href="index.html">Authors</a></li>
         </ul>
     </div>
-
     <div class="main-content">
         <div class="chemotherapy-animation">
             <div class="header">
@@ -420,349 +419,397 @@ body { overflow-x: hidden; overflow-y: auto; margin: 0; }
             </div>
             
             <script>
-            const svgNS = "http://www.w3.org/2000/svg";
-
-// Draw the progressively unwinding DNA, from double helix to full fork
-function drawProgressiveDNA(svg, x_center, y_offset, height, forkProgress = 0) {
-    // forkProgress: 0 = fully double helix, 1 = fully forked
-    const amplitude = 40, frequency = 0.025, segmentStep = 2;
-    const backboneColorBlue = '#007bff';
-    const backboneColorRed = '#dc3545';
-    const pairedHeight = height * (1 - forkProgress);
-
-    // Draw helical region (sine waves)
-    let dBlue = '', dRed = '';
-    const startY = y_offset;
-    const endY = y_offset + pairedHeight;
-    for (let currentY = startY; currentY <= endY; currentY += segmentStep) {
-        const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
-        const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
-        if (currentY === startY) {
-            dBlue += `M${xBlue},${currentY}`;
-            dRed += `M${xRed},${currentY}`;
-        } else {
-            dBlue += ` L${xBlue},${currentY}`;
-            dRed += ` L${xRed},${currentY}`;
-        }
-    }
-    // Fork region (straight, diverging lines)
-    if (forkProgress > 0) {
-        const wavyTop = y_offset + pairedHeight;
-        const xBlueTop = x_center - amplitude * Math.cos(frequency * (wavyTop - startY));
-        const xRedTop  = x_center - amplitude * Math.cos(frequency * (wavyTop - startY) + Math.PI);
-        const forkOffset = 60 * forkProgress;
-        const forkTop = y_offset + height;
-        dBlue += ` L${xBlueTop - forkOffset},${forkTop}`;
-        dRed  += ` L${xRedTop + forkOffset},${forkTop}`;
-    }
-
-    // Draw backbone paths
-    const strandBlue = document.createElementNS(svgNS, 'path');
-    strandBlue.setAttribute('d', dBlue);
-    strandBlue.setAttribute('stroke', backboneColorBlue);
-    strandBlue.setAttribute('stroke-width', 5);
-    strandBlue.setAttribute('fill', 'none');
-    svg.appendChild(strandBlue);
-
-    const strandRed = document.createElementNS(svgNS, 'path');
-    strandRed.setAttribute('d', dRed);
-    strandRed.setAttribute('stroke', backboneColorRed);
-    strandRed.setAttribute('stroke-width', 5);
-    strandRed.setAttribute('fill', 'none');
-    svg.appendChild(strandRed);
-
-    // Draw base pairs in paired region
-    if (forkProgress < 1) {
-        const basePairs = 8;
-        for (let i = 0; i < basePairs; i++) {
-            const frac = (i + 1) / (basePairs + 1);
-            const y = y_offset + frac * pairedHeight;
-            const xBlue = x_center - amplitude * Math.cos(frequency * (y - startY));
-            const xRed  = x_center - amplitude * Math.cos(frequency * (y - startY) + Math.PI);
-            const hBond = document.createElementNS(svgNS, 'line');
-            hBond.setAttribute('x1', xBlue);
-            hBond.setAttribute('y1', y);
-            hBond.setAttribute('x2', xRed);
-            hBond.setAttribute('y2', y);
-            hBond.setAttribute('stroke', '#BDC3C7');
-            hBond.setAttribute('stroke-width', '2');
-            svg.appendChild(hBond);
-        }
-    }
-}
-
-// Draws the Helicase enzyme as a purple circle at the fork
-function drawHelicase(svg, x, y) {
-    let circle = document.createElementNS(svgNS, "circle");
-    circle.setAttribute("cx", x);
-    circle.setAttribute("cy", y);
-    circle.setAttribute("r", 22);
-    circle.setAttribute("fill", "#9b59b6");
-    circle.setAttribute("class", "enzyme");
-    svg.appendChild(circle);
-    let text = document.createElementNS(svgNS, "text");
-    text.setAttribute("x", x);
-    text.setAttribute("y", y + 6);
-    text.setAttribute("text-anchor", "middle");
-    text.setAttribute("fill", "#fff");
-    text.setAttribute("font-size", "13px");
-    text.textContent = "Helicase";
-    svg.appendChild(text);
-}
-
-// Draw SSB (Single-Strand Binding) proteins as small purple ellipses on single strands
-function drawSSB(svg, x_center, y_offset, height, forkProgress) {
-    if (forkProgress < 0.3) return;
-    const pairedHeight = height * (1 - forkProgress);
-    const forkHeight = height * forkProgress;
-    const forkY = y_offset + pairedHeight;
-    const n = Math.floor(3 * forkProgress);
-    for (let i = 0; i < n; i++) {
-        let frac = (i + 1) / (n + 1);
-        let y = forkY + frac * forkHeight * 0.7;
-        // left strand
-        let ellL = document.createElementNS(svgNS, "ellipse");
-        ellL.setAttribute("cx", x_center - 80 * forkProgress);
-        ellL.setAttribute("cy", y);
-        ellL.setAttribute("rx", 12);
-        ellL.setAttribute("ry", 8);
-        ellL.setAttribute("fill", "#9b59b6");
-        ellL.setAttribute("opacity", "0.7");
-        ellL.setAttribute("class", "enzyme");
-        svg.appendChild(ellL);
-        // right strand
-        let ellR = document.createElementNS(svgNS, "ellipse");
-        ellR.setAttribute("cx", x_center + 80 * forkProgress);
-        ellR.setAttribute("cy", y);
-        ellR.setAttribute("rx", 12);
-        ellR.setAttribute("ry", 8);
-        ellR.setAttribute("fill", "#9b59b6");
-        ellR.setAttribute("opacity", "0.7");
-        ellR.setAttribute("class", "enzyme");
-        svg.appendChild(ellR);
-    }
-}
-
-// Draw Primase as a purple rectangle at the fork
-function drawPrimase(svg, x, y) {
-    let rect = document.createElementNS(svgNS, "rect");
-    rect.setAttribute("x", x - 28);
-    rect.setAttribute("y", y + 32);
-    rect.setAttribute("width", 56);
-    rect.setAttribute("height", 18);
-    rect.setAttribute("fill", "#9b59b6");
-    rect.setAttribute("rx", 3);
-    rect.setAttribute("class", "enzyme");
-    svg.appendChild(rect);
-    let text = document.createElementNS(svgNS, "text");
-    text.setAttribute("x", x);
-    text.setAttribute("y", y + 45);
-    text.setAttribute("fill", "#fff");
-    text.setAttribute("font-size", "13px");
-    text.setAttribute("text-anchor", "middle");
-    text.textContent = "Primase";
-    svg.appendChild(text);
-}
-
-// Draw RNA primers as short orange lines
-function drawRNAprimers(svg, x_center, y_offset, height, forkProgress) {
-    if (forkProgress < 0.95) return;
-    const y = y_offset + height * 0.85;
-    // Leading primer
-    let lead = document.createElementNS(svgNS, "rect");
-    lead.setAttribute("x", x_center - 38);
-    lead.setAttribute("y", y);
-    lead.setAttribute("width", 24);
-    lead.setAttribute("height", 5);
-    lead.setAttribute("fill", "#ffb347");
-    svg.appendChild(lead);
-    // Lagging primer (farther up)
-    let lag = document.createElementNS(svgNS, "rect");
-    lag.setAttribute("x", x_center + 14);
-    lag.setAttribute("y", y - 40);
-    lag.setAttribute("width", 24);
-    lag.setAttribute("height", 5);
-    lag.setAttribute("fill", "#ffb347");
-    svg.appendChild(lag);
-}
-
-// Draw DNA Polymerase as blue rectangles
-function drawPolymerases(svg, x_center, y_offset, height, forkProgress) {
-    if (forkProgress < 1) return;
-    // Leading
-    let polLead = document.createElementNS(svgNS, "rect");
-    polLead.setAttribute("x", x_center - 80);
-    polLead.setAttribute("y", y_offset + height * 0.84);
-    polLead.setAttribute("width", 38);
-    polLead.setAttribute("height", 16);
-    polLead.setAttribute("fill", "#118AB2");
-    polLead.setAttribute("rx", 4);
-    svg.appendChild(polLead);
-    let textLead = document.createElementNS(svgNS, "text");
-    textLead.setAttribute("x", x_center - 61);
-    textLead.setAttribute("y", y_offset + height * 0.84 + 12);
-    textLead.setAttribute("fill", "#fff");
-    textLead.setAttribute("font-size", "11px");
-    textLead.setAttribute("text-anchor", "middle");
-    textLead.textContent = "Pol III";
-    svg.appendChild(textLead);
-
-    // Lagging
-    let polLag = document.createElementNS(svgNS, "rect");
-    polLag.setAttribute("x", x_center + 55);
-    polLag.setAttribute("y", y_offset + height * 0.65);
-    polLag.setAttribute("width", 38);
-    polLag.setAttribute("height", 16);
-    polLag.setAttribute("fill", "#118AB2");
-    polLag.setAttribute("rx", 4);
-    svg.appendChild(polLag);
-    let textLag = document.createElementNS(svgNS, "text");
-    textLag.setAttribute("x", x_center + 74);
-    textLag.setAttribute("y", y_offset + height * 0.65 + 12);
-    textLag.setAttribute("fill", "#fff");
-    textLag.setAttribute("font-size", "11px");
-    textLag.setAttribute("text-anchor", "middle");
-    textLag.textContent = "Pol III";
-    svg.appendChild(textLag);
-}
-
-// Draw leading strand (continuous green line)
-function drawLeadingStrand(svg, x_center, y_offset, height, forkProgress) {
-    if (forkProgress < 1) return;
-    const yStart = y_offset + height * 0.85;
-    const yEnd = y_offset + height;
-    let path = document.createElementNS(svgNS, "line");
-    path.setAttribute("x1", x_center - 80);
-    path.setAttribute("y1", yStart);
-    path.setAttribute("x2", x_center - 80);
-    path.setAttribute("y2", yEnd);
-    path.setAttribute("stroke", "#27ae60");
-    path.setAttribute("stroke-width", 5);
-    svg.appendChild(path);
-}
-
-// Draw Okazaki fragments (short dashed green lines)
-function drawOkazakiFragments(svg, x_center, y_offset, height, forkProgress) {
-    if (forkProgress < 1) return;
-    const yBase = y_offset + height * 0.7;
-    for (let i = 0; i < 3; i++) {
-        let frag = document.createElementNS(svgNS, "line");
-        frag.setAttribute("x1", x_center + 80);
-        frag.setAttribute("y1", yBase - i * 18);
-        frag.setAttribute("x2", x_center + 80);
-        frag.setAttribute("y2", yBase - i * 18 + 12);
-        frag.setAttribute("stroke", "#27ae60");
-        frag.setAttribute("stroke-width", 5);
-        frag.setAttribute("stroke-dasharray", "8,4");
-        svg.appendChild(frag);
-    }
-}
-
-// Overlay new (green) strands on two double helices at the end
-// Only overlays the green (new) strand on one side (left or right)
-function drawSingleNewStrandOverlay(svg, x_center, y_offset, height, side) {
-    let rect = document.createElementNS(svgNS, "rect");
-    if (side === "left") {
-        rect.setAttribute("x", x_center - 15 - 5);
-    } else { // "right"
-        rect.setAttribute("x", x_center + 15 - 5);
-    }
-    rect.setAttribute("y", y_offset + 20);
-    rect.setAttribute("width", 10);
-    rect.setAttribute("height", height - 40);
-    rect.setAttribute("fill", "#27ae60");
-    svg.appendChild(rect);
-}
-const dnaSteps = [
-  {
-    title: "Step 1: Original DNA Double Helix",
-    description: "DNA is made of two strands twisted together to form a double helix. Each strand is made of a backbone (blue or red) with base pairs connecting them in the middle. The DNA is stable and ready for replication.",
-    draw: (svg) => {
-      drawProgressiveDNA(svg, 340, 60, 200, 0);
-    }
-  },
-  {
-    title: "Step 2: Helicase Unzips the DNA",
-    description: "The enzyme helicase (purple) attaches to the DNA at a starting point and moves along the helix, separating the two strands. This creates a Y-shaped area called the replication fork.",
-    draw: (svg) => {
-      drawProgressiveDNA(svg, 340, 60, 200, 0.3);
-      drawHelicase(svg, 340, 60 + 200 * 0.3);
-    }
-  },
-  {
-    title: "Step 3: SSB Proteins Stabilize the Strands",
-    description: "Single-strand binding (SSB) proteins (purple ovals) bind to the separated strands. They keep the strands apart and prevent them from sticking back together while replication happens.",
-    draw: (svg) => {
-      drawProgressiveDNA(svg, 340, 60, 200, 0.7);
-      drawHelicase(svg, 340, 60 + 200 * 0.7);
-      drawSSB(svg, 340, 60, 200, 0.7);
-    }
-  },
-  {
-    title: "Step 4: Primase Adds RNA Primers",
-    description: "The enzyme primase (purple rectangle) places short RNA primers (orange) on both DNA strands. These primers act as starting points so the next enzyme knows where to begin building new DNA.",
-    draw: (svg) => {
-      drawProgressiveDNA(svg, 340, 60, 200, 1);
-      drawHelicase(svg, 340, 60 + 200);
-      drawSSB(svg, 340, 60, 200, 1);
-      drawPrimase(svg, 340, 60 + 200);
-      drawRNAprimers(svg, 340, 60, 200, 1);
-    }
-  },
-  {
-    title: "Step 5: DNA Polymerase Builds New Strands",
-    description: "DNA polymerase (blue rectangles) builds new DNA in the 5'→3' direction. On one strand (the leading strand), the enzyme works smoothly toward the fork. On the other (the lagging strand), the enzyme builds in short pieces called Okazaki fragments (dashed green lines), away from the fork.",
-    draw: (svg) => {
-      drawProgressiveDNA(svg, 340, 60, 200, 1);
-      drawHelicase(svg, 340, 60 + 200);
-      drawSSB(svg, 340, 60, 200, 1);
-      drawPrimase(svg, 340, 60 + 200);
-      drawRNAprimers(svg, 340, 60, 200, 1);
-      drawPolymerases(svg, 340, 60, 200, 1);
-      drawLeadingStrand(svg, 340, 60, 200, 1);
-      drawOkazakiFragments(svg, 340, 60, 200, 1);
-    }
-  },
-  {
-  title: "Step 6: DNA Replication Complete",
-  description: "Replication is finished. Each DNA double helix has one original strand (blue or red) and one new strand (green). This is called 'semi-conservative' replication.",
-  draw: (svg) => {
-    // First DNA molecule: left side blue (parent), right side green (new)
-    drawProgressiveDNA(svg, 240, 60, 120, 0);
-    drawSingleNewStrandOverlay(svg, 240, 60, 120, "right");
-
-    // Second DNA molecule: left side green (new), right side red (parent)
-    drawProgressiveDNA(svg, 440, 140, 120, 0);
-    drawSingleNewStrandOverlay(svg, 440, 140, 120, "left");
-  }
-}
-];
-// --- Animation logic ---
-let currentStep = 0;
-function clearSVG(id) {
-    const svg = document.getElementById(id);
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-}
-function updateStep() {
-    document.getElementById('dna-step-title').textContent = dnaSteps[currentStep].title;
-    document.getElementById('dna-explanation').textContent = dnaSteps[currentStep].description;
-    clearSVG('dna-animation');
-    dnaSteps[currentStep].draw(document.getElementById('dna-animation'));
-    document.getElementById('nextBtn').disabled = (currentStep >= dnaSteps.length - 1);
-}
-function nextStep() {
-    if (currentStep < dnaSteps.length - 1) {
-        currentStep++;
-        updateStep();
-    }
-}
-function reset() {
-    currentStep = 0;
-    updateStep();
-}
-document.getElementById('nextBtn').addEventListener('click', nextStep);
-document.getElementById('resetBtn').addEventListener('click', reset);
-updateStep();
-            </script>
-            </body>
-            </html>
+                const svgNS = "http://www.w3.org/2000/svg";
+                
+                // --- Drawing functions ---
+                function drawProgressiveDNA(svg, x_center, y_offset, height, forkProgress = 0) {
+                    const amplitude = 40, frequency = 0.025, segmentStep = 2;
+                    const backboneColorBlue = '#007bff';
+                    const backboneColorRed = '#dc3545';
+                    const pairedHeight = height * (1 - forkProgress);
+                
+                    let dBlue = '', dRed = '';
+                    const startY = y_offset;
+                    const endY = y_offset + pairedHeight;
+                    for (let currentY = startY; currentY <= endY; currentY += segmentStep) {
+                        const xBlue = x_center - amplitude * Math.cos(frequency * (currentY - startY));
+                        const xRed  = x_center - amplitude * Math.cos(frequency * (currentY - startY) + Math.PI);
+                        if (currentY === startY) {
+                            dBlue += `M${xBlue},${currentY}`;
+                            dRed += `M${xRed},${currentY}`;
+                        } else {
+                            dBlue += ` L${xBlue},${currentY}`;
+                            dRed += ` L${xRed},${currentY}`;
+                        }
+                    }
+                    // Fork region (straight, diverging lines)
+                    if (forkProgress > 0) {
+                        const wavyTop = y_offset + pairedHeight;
+                        const xBlueTop = x_center - amplitude * Math.cos(frequency * (wavyTop - startY));
+                        const xRedTop  = x_center - amplitude * Math.cos(frequency * (wavyTop - startY) + Math.PI);
+                        const forkOffset = 60 * forkProgress;
+                        const forkTop = y_offset + height;
+                        dBlue += ` L${xBlueTop - forkOffset},${forkTop}`;
+                        dRed  += ` L${xRedTop + forkOffset},${forkTop}`;
+                    }
+                
+                    // Draw backbone paths
+                    const strandBlue = document.createElementNS(svgNS, 'path');
+                    strandBlue.setAttribute('d', dBlue);
+                    strandBlue.setAttribute('stroke', backboneColorBlue);
+                    strandBlue.setAttribute('stroke-width', 5);
+                    strandBlue.setAttribute('fill', 'none');
+                    svg.appendChild(strandBlue);
+                
+                    const strandRed = document.createElementNS(svgNS, 'path');
+                    strandRed.setAttribute('d', dRed);
+                    strandRed.setAttribute('stroke', backboneColorRed);
+                    strandRed.setAttribute('stroke-width', 5);
+                    strandRed.setAttribute('fill', 'none');
+                    svg.appendChild(strandRed);
+                
+                    // Draw base pairs in paired region
+                    if (forkProgress < 1) {
+                        const basePairs = 8;
+                        for (let i = 0; i < basePairs; i++) {
+                            const frac = (i + 1) / (basePairs + 1);
+                            const y = y_offset + frac * pairedHeight;
+                            const xBlue = x_center - amplitude * Math.cos(frequency * (y - startY));
+                            const xRed  = x_center - amplitude * Math.cos(frequency * (y - startY) + Math.PI);
+                            const hBond = document.createElementNS(svgNS, 'line');
+                            hBond.setAttribute('x1', xBlue);
+                            hBond.setAttribute('y1', y);
+                            hBond.setAttribute('x2', xRed);
+                            hBond.setAttribute('y2', y);
+                            hBond.setAttribute('stroke', '#BDC3C7');
+                            hBond.setAttribute('stroke-width', '2');
+                            svg.appendChild(hBond);
+                        }
+                    }
+                }
+                
+                function drawHelicase(svg, x, y) {
+                    let circle = document.createElementNS(svgNS, "circle");
+                    circle.setAttribute("cx", x);
+                    circle.setAttribute("cy", y);
+                    circle.setAttribute("r", 22);
+                    circle.setAttribute("fill", "#9b59b6");
+                    circle.setAttribute("class", "enzyme");
+                    svg.appendChild(circle);
+                    let text = document.createElementNS(svgNS, "text");
+                    text.setAttribute("x", x);
+                    text.setAttribute("y", y + 6);
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("fill", "#fff");
+                    text.setAttribute("font-size", "13px");
+                    text.textContent = "Helicase";
+                    svg.appendChild(text);
+                }
+                
+                function drawSSB(svg, x_center, y_offset, height, forkProgress) {
+                    if (forkProgress < 0.3) return;
+                    const pairedHeight = height * (1 - forkProgress);
+                    const forkHeight = height * forkProgress;
+                    const forkY = y_offset + pairedHeight;
+                    const n = Math.floor(3 * forkProgress);
+                    for (let i = 0; i < n; i++) {
+                        let frac = (i + 1) / (n + 1);
+                        let y = forkY + frac * forkHeight * 0.7;
+                        // left strand
+                        let ellL = document.createElementNS(svgNS, "ellipse");
+                        ellL.setAttribute("cx", x_center - 80 * forkProgress);
+                        ellL.setAttribute("cy", y);
+                        ellL.setAttribute("rx", 12);
+                        ellL.setAttribute("ry", 8);
+                        ellL.setAttribute("fill", "#9b59b6");
+                        ellL.setAttribute("opacity", "0.7");
+                        ellL.setAttribute("class", "enzyme");
+                        svg.appendChild(ellL);
+                        // right strand
+                        let ellR = document.createElementNS(svgNS, "ellipse");
+                        ellR.setAttribute("cx", x_center + 80 * forkProgress);
+                        ellR.setAttribute("cy", y);
+                        ellR.setAttribute("rx", 12);
+                        ellR.setAttribute("ry", 8);
+                        ellR.setAttribute("fill", "#9b59b6");
+                        ellR.setAttribute("opacity", "0.7");
+                        ellR.setAttribute("class", "enzyme");
+                        svg.appendChild(ellR);
+                    }
+                }
+                
+                function drawPrimase(svg, x, y) {
+                    let rect = document.createElementNS(svgNS, "rect");
+                    rect.setAttribute("x", x - 28);
+                    rect.setAttribute("y", y + 32);
+                    rect.setAttribute("width", 56);
+                    rect.setAttribute("height", 18);
+                    rect.setAttribute("fill", "#9b59b6");
+                    rect.setAttribute("rx", 3);
+                    rect.setAttribute("class", "enzyme");
+                    svg.appendChild(rect);
+                    let text = document.createElementNS(svgNS, "text");
+                    text.setAttribute("x", x);
+                    text.setAttribute("y", y + 45);
+                    text.setAttribute("fill", "#fff");
+                    text.setAttribute("font-size", "13px");
+                    text.setAttribute("text-anchor", "middle");
+                    text.textContent = "Primase";
+                    svg.appendChild(text);
+                }
+                
+                function drawRNAprimers(svg, x_center, y_offset, height, forkProgress) {
+                    if (forkProgress < 0.95) return;
+                    const y = y_offset + height * 0.85;
+                    let lead = document.createElementNS(svgNS, "rect");
+                    lead.setAttribute("x", x_center - 38);
+                    lead.setAttribute("y", y);
+                    lead.setAttribute("width", 24);
+                    lead.setAttribute("height", 5);
+                    lead.setAttribute("fill", "#ffb347");
+                    svg.appendChild(lead);
+                    let lag = document.createElementNS(svgNS, "rect");
+                    lag.setAttribute("x", x_center + 14);
+                    lag.setAttribute("y", y - 40);
+                    lag.setAttribute("width", 24);
+                    lag.setAttribute("height", 5);
+                    lag.setAttribute("fill", "#ffb347");
+                    svg.appendChild(lag);
+                }
+                
+                function drawPolymerases(svg, x_center, y_offset, height, forkProgress) {
+                    if (forkProgress < 1) return;
+                    // Leading
+                    let polLead = document.createElementNS(svgNS, "rect");
+                    polLead.setAttribute("x", x_center - 80);
+                    polLead.setAttribute("y", y_offset + height * 0.84);
+                    polLead.setAttribute("width", 38);
+                    polLead.setAttribute("height", 16);
+                    polLead.setAttribute("fill", "#118AB2");
+                    polLead.setAttribute("rx", 4);
+                    svg.appendChild(polLead);
+                    let textLead = document.createElementNS(svgNS, "text");
+                    textLead.setAttribute("x", x_center - 61);
+                    textLead.setAttribute("y", y_offset + height * 0.84 + 12);
+                    textLead.setAttribute("fill", "#fff");
+                    textLead.setAttribute("font-size", "11px");
+                    textLead.setAttribute("text-anchor", "middle");
+                    textLead.textContent = "Pol III";
+                    svg.appendChild(textLead);
+                
+                    // Lagging
+                    let polLag = document.createElementNS(svgNS, "rect");
+                    polLag.setAttribute("x", x_center + 55);
+                    polLag.setAttribute("y", y_offset + height * 0.65);
+                    polLag.setAttribute("width", 38);
+                    polLag.setAttribute("height", 16);
+                    polLag.setAttribute("fill", "#118AB2");
+                    polLag.setAttribute("rx", 4);
+                    svg.appendChild(polLag);
+                    let textLag = document.createElementNS(svgNS, "text");
+                    textLag.setAttribute("x", x_center + 74);
+                    textLag.setAttribute("y", y_offset + height * 0.65 + 12);
+                    textLag.setAttribute("fill", "#fff");
+                    textLag.setAttribute("font-size", "11px");
+                    textLag.setAttribute("text-anchor", "middle");
+                    textLag.textContent = "Pol III";
+                    svg.appendChild(textLag);
+                }
+                
+                function drawLeadingStrand(svg, x_center, y_offset, height, forkProgress) {
+                    if (forkProgress < 1) return;
+                    const yStart = y_offset + height * 0.85;
+                    const yEnd = y_offset + height;
+                    let path = document.createElementNS(svgNS, "line");
+                    path.setAttribute("x1", x_center - 80);
+                    path.setAttribute("y1", yStart);
+                    path.setAttribute("x2", x_center - 80);
+                    path.setAttribute("y2", yEnd);
+                    path.setAttribute("stroke", "#27ae60");
+                    path.setAttribute("stroke-width", 5);
+                    svg.appendChild(path);
+                }
+                
+                function drawOkazakiFragments(svg, x_center, y_offset, height, forkProgress) {
+                    if (forkProgress < 1) return;
+                    const yBase = y_offset + height * 0.7;
+                    for (let i = 0; i < 3; i++) {
+                        let frag = document.createElementNS(svgNS, "line");
+                        frag.setAttribute("x1", x_center + 80);
+                        frag.setAttribute("y1", yBase - i * 18);
+                        frag.setAttribute("x2", x_center + 80);
+                        frag.setAttribute("y2", yBase - i * 18 + 12);
+                        frag.setAttribute("stroke", "#27ae60");
+                        frag.setAttribute("stroke-width", 5);
+                        frag.setAttribute("stroke-dasharray", "8,4");
+                        svg.appendChild(frag);
+                    }
+                }
+                
+                function drawSingleNewStrandOverlay(svg, x_center, y_offset, height, side) {
+                    let rect = document.createElementNS(svgNS, "rect");
+                    if (side === "left") {
+                        rect.setAttribute("x", x_center - 15 - 5);
+                    } else {
+                        rect.setAttribute("x", x_center + 15 - 5);
+                    }
+                    rect.setAttribute("y", y_offset + 20);
+                    rect.setAttribute("width", 10);
+                    rect.setAttribute("height", height - 40);
+                    rect.setAttribute("fill", "#27ae60");
+                    svg.appendChild(rect);
+                }
+                
+                // --- Animation steps ---
+                const dnaSteps = [
+                  {
+                    title: "Step 1: Original DNA Double Helix",
+                    description: "DNA is made of two strands twisted together to form a double helix. Each strand is made of a backbone (blue or red) with base pairs connecting them in the middle. The DNA is stable and ready for replication.",
+                    draw: (svg) => { drawProgressiveDNA(svg, 340, 60, 200, 0); }
+                  },
+                  {
+                    title: "Step 2: Helicase Unzips the DNA",
+                    description: "The enzyme helicase (purple) attaches to the DNA at a starting point and moves along the helix, separating the two strands. This creates a Y-shaped area called the replication fork.",
+                    draw: (svg) => {
+                      drawProgressiveDNA(svg, 340, 60, 200, 0.3);
+                      drawHelicase(svg, 340, 60 + 200 * 0.3);
+                    }
+                  },
+                  {
+                    title: "Step 3: SSB Proteins Stabilize the Strands",
+                    description: "Single-strand binding (SSB) proteins (purple ovals) bind to the separated strands. They keep the strands apart and prevent them from sticking back together while replication happens.",
+                    draw: (svg) => {
+                      drawProgressiveDNA(svg, 340, 60, 200, 0.7);
+                      drawHelicase(svg, 340, 60 + 200 * 0.7);
+                      drawSSB(svg, 340, 60, 200, 0.7);
+                    }
+                  },
+                  {
+                    title: "Step 4: Primase Adds RNA Primers",
+                    description: "The enzyme primase (purple rectangle) places short RNA primers (orange) on both DNA strands. These primers act as starting points so the next enzyme knows where to begin building new DNA.",
+                    draw: (svg) => {
+                      drawProgressiveDNA(svg, 340, 60, 200, 1);
+                      drawHelicase(svg, 340, 60 + 200);
+                      drawSSB(svg, 340, 60, 200, 1);
+                      drawPrimase(svg, 340, 60 + 200);
+                      drawRNAprimers(svg, 340, 60, 200, 1);
+                    }
+                  },
+                  {
+                    title: "Step 5: DNA Polymerase Builds New Strands",
+                    description: "DNA polymerase (blue rectangles) builds new DNA in the 5'→3' direction. On one strand (the leading strand), the enzyme works smoothly toward the fork. On the other (the lagging strand), the enzyme builds in short pieces called Okazaki fragments (dashed green lines), away from the fork.",
+                    draw: (svg) => {
+                      drawProgressiveDNA(svg, 340, 60, 200, 1);
+                      drawHelicase(svg, 340, 60 + 200);
+                      drawSSB(svg, 340, 60, 200, 1);
+                      drawPrimase(svg, 340, 60 + 200);
+                      drawRNAprimers(svg, 340, 60, 200, 1);
+                      drawPolymerases(svg, 340, 60, 200, 1);
+                      drawLeadingStrand(svg, 340, 60, 200, 1);
+                      drawOkazakiFragments(svg, 340, 60, 200, 1);
+                    }
+                  },
+                  {
+                    title: "Step 6: DNA Replication Complete",
+                    description: "Replication is finished. Each DNA double helix has one original strand (blue or red) and one new strand (green). This is called 'semi-conservative' replication.",
+                    draw: (svg) => {
+                      // First DNA molecule: left side blue (parent), right side green (new)
+                      drawProgressiveDNA(svg, 240, 60, 120, 0);
+                      drawSingleNewStrandOverlay(svg, 240, 60, 120, "right");
+                      // Second DNA molecule: left side green (new), right side red (parent)
+                      drawProgressiveDNA(svg, 440, 140, 120, 0);
+                      drawSingleNewStrandOverlay(svg, 440, 140, 120, "left");
+                    }
+                  }
+                ];
+                
+                // --- Animation logic ---
+                let currentStep = 0;
+                function clearSVG(id) {
+                    const svg = document.getElementById(id);
+                    if (!svg) return;
+                    while (svg.firstChild) svg.removeChild(svg.firstChild);
+                }
+                function updateStep() {
+                    document.getElementById('dna-step-title').textContent = dnaSteps[currentStep].title;
+                    document.getElementById('dna-explanation').textContent = dnaSteps[currentStep].description;
+                    clearSVG('dna-animation');
+                    dnaSteps[currentStep].draw(document.getElementById('dna-animation'));
+                    document.getElementById('nextBtn').disabled = (currentStep >= dnaSteps.length - 1);
+                }
+                function nextStep() {
+                    if (currentStep < dnaSteps.length - 1) {
+                        currentStep++;
+                        updateStep();
+                    }
+                }
+                function reset() {
+                    currentStep = 0;
+                    updateStep();
+                }
+                
+                // --- DOMContentLoaded for UI and sidebar logic ---
+                document.addEventListener('DOMContentLoaded', () => {
+                    // DNA animation section event binding
+                    const nextBtn = document.getElementById('nextBtn');
+                    const resetBtn = document.getElementById('resetBtn');
+                    if (nextBtn && resetBtn) {
+                        nextBtn.addEventListener('click', nextStep);
+                        resetBtn.addEventListener('click', reset);
+                        updateStep();
+                    }
+                
+                    // Sidebar logic
+                    const sidebar = document.querySelector(".sidebar");
+                    const sidebarToggle = document.querySelector('.sidebar-toggle');
+                    const navLinks = document.querySelectorAll(".nav-links > li > a");
+                    const hasSubmenuItems = document.querySelectorAll('.has-submenu');
+                    const subLinks = document.querySelectorAll('.sub-links a');
+                
+                    // Sidebar toggle logic
+                    if (sidebarToggle && sidebar) {
+                        sidebarToggle.addEventListener('click', function () {
+                            sidebar.classList.toggle('active');
+                            localStorage.setItem('sidebarExpanded', sidebar.classList.contains('active'));
+                        });
+                
+                        // Restore state
+                        if (localStorage.getItem('sidebarExpanded') === 'true') {
+                            sidebar.classList.add('active');
+                        }
+                    }
+                
+                    // Submenu toggle
+                    hasSubmenuItems.forEach(item => {
+                        const link = item.querySelector('a');
+                        if (link) {
+                            link.addEventListener('click', function (e) {
+                                e.preventDefault();
+                                item.classList.toggle('active');
+                            });
+                        }
+                    });
+                
+                    // Close sidebar when a submenu link is clicked
+                    subLinks.forEach(subLink => {
+                        subLink.addEventListener('click', () => {
+                            if (sidebar) {
+                                sidebar.classList.remove("active");
+                                localStorage.setItem('sidebarExpanded', 'false');
+                            }
+                        });
+                    });
+                
+                    // Close sidebar when a top-level (non-submenu) link is clicked
+                    navLinks.forEach(link => {
+                        link.addEventListener("click", () => {
+                            if (!link.parentElement.classList.contains('has-submenu') && sidebar) {
+                                sidebar.classList.remove("active");
+                                localStorage.setItem('sidebarExpanded', 'false');
+                            }
+                        });
+                    });
+                });
+                </script>
+                </body>
+                </html>
