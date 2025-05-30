@@ -959,265 +959,341 @@
         </div>
     </div>
 
+<!-- GSAP Library (required for animation) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-    <script>
-        const nmStepData = [
-            { title: "Step 1: Initial DNA Structure", content: "The DNA double helix is shown with intact hydrogen bonds. Nitrogen mustard (NM) is not yet present." },
-            { title: "Step 2: NM Approaches DNA", content: "Nitrogen mustard (NM) appears and moves toward the DNA, targeting guanine bases." },
-            { title: "Step 3: Aziridinium Ion Formation", content: "NM undergoes intramolecular cyclization, forming a reactive aziridinium ion (orange pill-shaped label)." },
-            { title: "Step 4: First Alkylation of Guanine (Monoadduct)", content: "The aziridinium ion is attacked by the N7 of a guanine base, forming a covalent (alkyl) bond—first adduct." },
-            { title: "Step 5: Second Cyclization & Interstrand Cross-Link", content: "The second arm of NM cyclizes and alkylates a guanine on the opposite strand, creating an interstrand cross-link." },
-            { title: "Step 6: Biological Blockage and Cell Death", content: "The cross-link distorts the DNA double helix, blocking replication and transcription. This triggers cell death (apoptosis)—the basis of NM’s anticancer action." }
-        ];
-        
-        let nmCurrentStep = 0;
-        const nmMaxSteps = nmStepData.length;
-        let nmDna, g1, g2, g1x, g1y, g2x, g2y;
-        
-        // --- NEW: Utility to bring molecule groups to front ---
-        function bringMoleculesToFront() {
-            const zoomGroup = document.getElementById('nm-zoom-group');
-            ['cross-link-formation', 'nm-molecule', 'aziridinium-ion'].forEach(id => {
-                const g = document.getElementById(id);
-                if (g && zoomGroup) zoomGroup.appendChild(g);
+<script>
+/* === Sidebar Logic === */
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.querySelector(".sidebar");
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const navLinks = document.querySelectorAll(".nav-links > li > a");
+    const hasSubmenuItems = document.querySelectorAll('.has-submenu');
+    const subLinks = document.querySelectorAll('.sub-links a');
+
+    // Sidebar toggle logic
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+            localStorage.setItem('sidebarExpanded', sidebar.classList.contains('active'));
+        });
+
+        // Restore state
+        if (localStorage.getItem('sidebarExpanded') === 'true') {
+            sidebar.classList.add('active');
+        }
+    }
+
+    // Submenu toggle
+    hasSubmenuItems.forEach(item => {
+        const link = item.querySelector('a');
+        if (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                item.classList.toggle('active');
             });
         }
-        
-        function initNitrogenMustardAnimation() {
-            // Clear any previous DNA (if any)
-            const zoomGroup = document.getElementById('nm-zoom-group');
-            const initialDna = document.getElementById('initial-dna-container');
-            if (initialDna) {
-                initialDna.innerHTML = '';
+    });
+
+    // Close sidebar when a submenu link is clicked
+    subLinks.forEach(subLink => {
+        subLink.addEventListener('click', () => {
+            sidebar.classList.remove("active");
+            localStorage.setItem('sidebarExpanded', 'false');
+        });
+    });
+
+    // Close sidebar when a top-level (non-submenu) link is clicked
+    navLinks.forEach(link => {
+        link.addEventListener("click", () => {
+            if (!link.parentElement.classList.contains('has-submenu')) {
+                sidebar.classList.remove("active");
+                localStorage.setItem('sidebarExpanded', 'false');
             }
-            nmDna = createDNAStrands(zoomGroup, 400, 80, 300);
-            bringMoleculesToFront(); // <-- Always bring molecules on top after DNA draw
+        });
+    });
+
+/* === Nitrogen Mustard Animation Logic === */
+const nmStepData = [
+    { title: "Step 1: Initial DNA Structure", content: "The DNA double helix is shown with intact hydrogen bonds. Nitrogen mustard (NM) is not yet present." },
+    { title: "Step 2: NM Approaches DNA", content: "Nitrogen mustard (NM) appears and moves toward the DNA, targeting guanine bases." },
+    { title: "Step 3: Aziridinium Ion Formation", content: "NM undergoes intramolecular cyclization, forming a reactive aziridinium ion (orange pill-shaped label)." },
+    { title: "Step 4: First Alkylation of Guanine (Monoadduct)", content: "The aziridinium ion is attacked by the N7 of a guanine base, forming a covalent (alkyl) bond—first adduct." },
+    { title: "Step 5: Second Cyclization & Interstrand Cross-Link", content: "The second arm of NM cyclizes and alkylates a guanine on the opposite strand, creating an interstrand cross-link." },
+    { title: "Step 6: Biological Blockage and Cell Death", content: "The cross-link distorts the DNA double helix, blocking replication and transcription. This triggers cell death (apoptosis)—the basis of NM’s anticancer action." }
+];
+
+let nmCurrentStep = 0;
+const nmMaxSteps = nmStepData.length;
+let nmDna, g1, g2, g1x, g1y, g2x, g2y;
+
+function bringMoleculesToFront() {
+    const zoomGroup = document.getElementById('nm-zoom-group');
+    ['cross-link-formation', 'nm-molecule', 'aziridinium-ion'].forEach(id => {
+        const g = document.getElementById(id);
+        if (g && zoomGroup) zoomGroup.appendChild(g);
+    });
+}
+
+function createLabel(group, x, y, txt, color="#fff", size="8px", weight="normal") {
+    const t = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+    t.setAttribute('x', x);
+    t.setAttribute('y', y);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('font-size', size);
+    t.setAttribute('fill', color);
+    t.setAttribute('font-weight', weight);
+    t.textContent = txt;
+    group.appendChild(t);
+    return t;
+}
+
+function createDNAStrands(svg, centerX, y0, h) {
+    const group = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    svg.appendChild(group);
+
+    const amp = 40, freq = 0.025, step = 2;
+    let dBlue = '', dRed = '';
+    for (let y = y0; y <= y0 + h; y += step) {
+        const x1 = centerX - amp * Math.cos(freq * (y-y0));
+        const x2 = centerX + amp * Math.cos(freq * (y-y0));
+        if (y === y0) { dBlue += `M${x1},${y}`; dRed += `M${x2},${y}`; }
+        else { dBlue += ` L${x1},${y}`; dRed += ` L${x2},${y}`; }
+    }
+    const pathBlue = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+    pathBlue.setAttribute('d', dBlue); pathBlue.setAttribute('stroke', '#007bff');
+    pathBlue.setAttribute('stroke-width', 5); pathBlue.setAttribute('fill', 'none');
+    group.appendChild(pathBlue);
+    const pathRed = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+    pathRed.setAttribute('d', dRed); pathRed.setAttribute('stroke', '#dc3545');
+    pathRed.setAttribute('stroke-width', 5); pathRed.setAttribute('fill', 'none');
+    group.appendChild(pathRed);
+
+    createLabel(group, centerX-amp-18, y0, "5'");
+    createLabel(group, centerX-amp-18, y0+h, "3'");
+    createLabel(group, centerX+amp+18, y0, "3'");
+    createLabel(group, centerX+amp+18, y0+h, "5'");
+
+    const seq = ['A','T','G','C','G','T','A','C','A','G'];
+    const ySpacing = h/(seq.length+1);
+    let bases1=[], bases2=[], hBonds=[];
+    for (let i=0; i<seq.length; i++) {
+        const yb = y0 + (i+1)*ySpacing;
+        const x1 = centerX - amp * Math.cos(freq*(yb-y0));
+        const x2 = centerX + amp * Math.cos(freq*(yb-y0));
+        let color1, color2, b1, b2;
+        if (seq[i] === 'A') { color1="#F08080"; color2="#F5D67D"; b1='A'; b2='T'; }
+        if (seq[i] === 'T') { color1="#F5D67D"; color2="#F08080"; b1='T'; b2='A'; }
+        if (seq[i] === 'G') { color1="#58D68D"; color2="#5DADE2"; b1='G'; b2='C'; }
+        if (seq[i] === 'C') { color1="#5DADE2"; color2="#58D68D"; b1='C'; b2='G'; }
+        // Strand 1 base
+        const rect1 = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+        rect1.setAttribute('x', x1-8); rect1.setAttribute('y', yb-5); rect1.setAttribute('width', 16); rect1.setAttribute('height', 10);
+        rect1.setAttribute('fill', color1); rect1.setAttribute('rx', 2);
+        group.appendChild(rect1);
+        bases1.push({element:rect1, x:x1, y:yb, type:b1});
+        createLabel(group, x1, yb+3, b1);
+        // Strand 2 base
+        const rect2 = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+        rect2.setAttribute('x', x2-8); rect2.setAttribute('y', yb-5); rect2.setAttribute('width', 16); rect2.setAttribute('height', 10);
+        rect2.setAttribute('fill', color2); rect2.setAttribute('rx', 2);
+        group.appendChild(rect2);
+        bases2.push({element:rect2, x:x2, y:yb, type:b2});
+        createLabel(group, x2, yb+3, b2);
+
+        // H bond
+        const bond = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+        bond.setAttribute('x1', x1+8); bond.setAttribute('y1', yb);
+        bond.setAttribute('x2', x2-8); bond.setAttribute('y2', yb);
+        bond.setAttribute('stroke', '#BDC3C7'); bond.setAttribute('stroke-width', 2);
+        group.appendChild(bond);
+        hBonds.push(bond);
+    }
+    return {group, pathBlue, pathRed, bases1, bases2, hBonds, amp, freq, y0, h, centerX, ySpacing};
+}
+
+function setAnimationStep(step) {
+    // Hide all molecules and overlays by default
+    gsap.set("#nm-molecule", {opacity: 0, x: 0, y: 0, scale: 1});
+    gsap.set("#aziridinium-ion", {opacity: 0, x: 0, y: 0, scale: 1});
+    gsap.set("#cross-link-formation", {opacity: 0});
+    gsap.set("#cross-link-line", {opacity: 0}); // Hide the line unless needed
+
+    gsap.set(nmDna.bases1.map(b=>b.element), {fill: null, y: 0});
+    gsap.set(nmDna.bases2.map(b=>b.element), {fill: null, y: 0});
+    gsap.set(nmDna.hBonds, {opacity: 1});
+    gsap.set([nmDna.pathBlue, nmDna.pathRed], {clearProps: 'all'});
+
+    g1 = nmDna.bases1.find(b => b.type === 'G');
+    g2 = nmDna.bases2.slice().reverse().find(b => b.type === 'G');
+    g1x = g1.x + 8; g1y = g1.y;
+    g2x = g2.x - 8; g2y = g2.y;
+
+    bringMoleculesToFront();
+
+    switch (step) {
+        case 0:
+            // No molecules present
+            break;
+        case 1: // NM appears and moves to DNA
+            let nmMol = document.getElementById('nm-molecule');
+            if (!nmMol) {
+                nmMol = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+                nmMol.setAttribute('id', 'nm-molecule');
+                let c = document.createElementNS("http://www.w3.org/2000/svg", 'ellipse');
+                c.setAttribute('cx', 0); c.setAttribute('cy', 0);
+                c.setAttribute('rx', 24); c.setAttribute('ry', 14);
+                c.setAttribute('fill', '#2c3e50');
+                nmMol.appendChild(c);
+                let txt = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+                txt.setAttribute('x', 0); txt.setAttribute('y', 5);
+                txt.setAttribute('text-anchor', 'middle');
+                txt.setAttribute('font-size', '13px');
+                txt.setAttribute('fill', '#fff');
+                txt.textContent = "NM";
+                nmMol.appendChild(txt);
+                document.getElementById('nm-zoom-group').appendChild(nmMol);
+            }
+            gsap.set(nmMol, {opacity: 1, x: g1x - 400, y: g1y - 280, scale: 0.8});
+            gsap.to(nmMol, {duration: 1.2, x: g1x - 50, y: g1y - 10, ease: "power2.out"});
+            break;
+        case 2: // Aziridinium ion appears at NM's position and moves in
+            let az = document.getElementById('aziridinium-ion');
+            if (!az) {
+                az = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+                az.setAttribute('id', 'aziridinium-ion');
+                let c = document.createElementNS("http://www.w3.org/2000/svg", 'ellipse');
+                c.setAttribute('cx', 0); c.setAttribute('cy', 0);
+                c.setAttribute('rx', 18); c.setAttribute('ry', 10);
+                c.setAttribute('fill', 'orange');
+                az.appendChild(c);
+                let txt = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+                txt.setAttribute('x', 0); txt.setAttribute('y', 4);
+                txt.setAttribute('text-anchor', 'middle');
+                txt.setAttribute('font-size', '12px');
+                txt.setAttribute('fill', '#fff');
+                txt.textContent = "Aziridinium";
+                az.appendChild(txt);
+                document.getElementById('nm-zoom-group').appendChild(az);
+            }
+            gsap.set(az, {opacity: 1, x: g1x - 400, y: g1y - 280, scale: 1});
+            gsap.to(az, {duration: 1.2, x: g1x - 16, y: g1y - 6, ease: "power2.out"});
+            break;
+            case 3: // Highlight first guanine for alkylation (monoadduct)
+            // Hide NM, show aziridinium at site
+            gsap.set("#nm-molecule", {opacity: 0});
+            let az3 = document.getElementById('aziridinium-ion');
+            if (!az3) return;
+            gsap.set(az3, {opacity: 1, x: g1x - 16, y: g1y - 6, scale: 1});
+            // Highlight first guanine base
+            gsap.to(g1.element, {fill: "#8A2BE2", duration: 0.5});
+            break;
+
+        case 4: // Draw cross-link to second guanine (interstrand)
+            // Keep aziridinium visible and first guanine highlighted
+            let az4 = document.getElementById('aziridinium-ion');
+            if (az4) gsap.set(az4, {opacity: 1, x: g1x - 16, y: g1y - 6, scale: 1});
+            gsap.to(g1.element, {fill: "#8A2BE2", duration: 0.5});
+            gsap.to(g2.element, {fill: "#8A2BE2", duration: 0.5});
+
+            // Draw cross-link line (if not present)
+            let crossLink = document.getElementById('cross-link-line');
+            if (!crossLink) {
+                crossLink = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+                crossLink.setAttribute('id', 'cross-link-line');
+                crossLink.setAttribute('stroke', '#D32F2F');
+                crossLink.setAttribute('stroke-width', 6);
+                crossLink.setAttribute('stroke-dasharray', '7,4');
+                document.getElementById('nm-zoom-group').appendChild(crossLink);
+            }
+            crossLink.setAttribute('x1', g1x);
+            crossLink.setAttribute('y1', g1y);
+            crossLink.setAttribute('x2', g2x);
+            crossLink.setAttribute('y2', g2y);
+            gsap.set(crossLink, {opacity: 1});
+            break;
+
+        case 5: // DNA distortion and cell death
+            // Distort the DNA between two guanines, keep cross-link visible
+            let crossLink5 = document.getElementById('cross-link-line');
+            if (crossLink5) gsap.set(crossLink5, {opacity: 1});
+            gsap.to(g1.element, {fill: "#8A2BE2", y: g1.y - 6, duration: 0.5});
+            gsap.to(g2.element, {fill: "#8A2BE2", y: g2.y - 6, duration: 0.5});
+
+            // Re-draw the DNA with a bend between crosslinked points
+            let dBlue = '', dRed = '';
+            for (let y = nmDna.y0; y <= nmDna.y0 + nmDna.h; y += 2) {
+                let bend = 0;
+                if (y > g1y-24 && y < g2y+24) bend = -20 * Math.sin((y-g1y)/30);
+                const x1b = nmDna.centerX - nmDna.amp * Math.cos(nmDna.freq * (y-nmDna.y0)) + bend;
+                const x2b = nmDna.centerX + nmDna.amp * Math.cos(nmDna.freq * (y-nmDna.y0)) - bend;
+                if (y === nmDna.y0) { dBlue += `M${x1b},${y}`; dRed += `M${x2b},${y}`; }
+                else { dBlue += ` L${x1b},${y}`; dRed += ` L${x2b},${y}`; }
+            }
+            nmDna.pathBlue.setAttribute('d', dBlue);
+            nmDna.pathRed.setAttribute('d', dRed);
+
+            // Fade out H-bonds (DNA denaturation)
+            gsap.to(nmDna.hBonds, {opacity: 0.2, duration: 0.7});
+            // Optional: add "Cell Death" label
+            let deathLabel = document.getElementById('cell-death-label');
+            if (!deathLabel) {
+                deathLabel = document.createElementNS("http://www.w3.org/2000/svg", 'text');
+                deathLabel.setAttribute('id', 'cell-death-label');
+                deathLabel.setAttribute('x', 700);
+                deathLabel.setAttribute('y', 60);
+                deathLabel.setAttribute('fill', '#D32F2F');
+                deathLabel.setAttribute('font-size', '28px');
+                deathLabel.setAttribute('font-weight', 'bold');
+                deathLabel.textContent = "☠ Cell Death";
+                document.getElementById('nm-zoom-group').appendChild(deathLabel);
+            }
+            gsap.set(deathLabel, {opacity: 1});
+            break;
+
+        case 6: // Fade out everything, show just "Cell Death"
+            gsap.to("#nm-molecule", {opacity: 0, duration: 0.6});
+            gsap.to("#aziridinium-ion", {opacity: 0, duration: 0.6});
+            gsap.to("#cross-link-line", {opacity: 0.5, duration: 0.6});
+            gsap.to(nmDna.bases1.map(b=>b.element), {opacity: 0.3, duration: 1});
+            gsap.to(nmDna.bases2.map(b=>b.element), {opacity: 0.3, duration: 1});
+            gsap.to([nmDna.pathBlue, nmDna.pathRed], {opacity: 0.3, duration: 1});
+            let deathLabel6 = document.getElementById('cell-death-label');
+            if (deathLabel6) gsap.set(deathLabel6, {opacity: 1});
+            break;
+    }
+    document.getElementById('nm-step-title').innerText = nmStepData[step].title;
+    document.getElementById('nm-explanation').innerText = nmStepData[step].content;
+    document.getElementById('nm-prev-btn').disabled = (step === 0);
+    document.getElementById('nm-next-btn').disabled = (step === nmMaxSteps - 1);
+}
+
+function initNitrogenMustardAnimation() {
+    // Remove previous DNA
+    const zoomGroup = document.getElementById('nm-zoom-group');
+    zoomGroup.innerHTML = '';
+    nmDna = createDNAStrands(zoomGroup, 400, 80, 300);
+    bringMoleculesToFront();
+    setAnimationStep(nmCurrentStep);
+}
+
+    // Nitrogen Mustard mechanism animation logic
+    initNitrogenMustardAnimation();
+    document.getElementById('nm-prev-btn').onclick = function() {
+        if (nmCurrentStep > 0) {
+            nmCurrentStep--;
             setAnimationStep(nmCurrentStep);
         }
-        
-        // Helper functions for DNA drawing and animation
-        function createLabel(group, x, y, txt, color="#fff", size="8px", weight="normal") {
-            const t = document.createElementNS("http://www.w3.org/2000/svg", 'text');
-            t.setAttribute('x', x);
-            t.setAttribute('y', y);
-            t.setAttribute('text-anchor', 'middle');
-            t.setAttribute('font-size', size);
-            t.setAttribute('fill', color);
-            t.setAttribute('font-weight', weight);
-            t.textContent = txt;
-            group.appendChild(t);
-            return t;
+    };
+    document.getElementById('nm-next-btn').onclick = function() {
+        if (nmCurrentStep < nmMaxSteps-1) {
+            nmCurrentStep++;
+            setAnimationStep(nmCurrentStep);
         }
-        function createDNAStrands(svg, centerX, y0, h) {
-            const group = document.createElementNS("http://www.w3.org/2000/svg", 'g');
-            svg.appendChild(group);
-        
-            const amp = 40, freq = 0.025, step = 2;
-            let dBlue = '', dRed = '';
-            for (let y = y0; y <= y0 + h; y += step) {
-                const x1 = centerX - amp * Math.cos(freq * (y-y0));
-                const x2 = centerX + amp * Math.cos(freq * (y-y0));
-                if (y === y0) { dBlue += `M${x1},${y}`; dRed += `M${x2},${y}`; }
-                else { dBlue += ` L${x1},${y}`; dRed += ` L${x2},${y}`; }
-            }
-            const pathBlue = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-            pathBlue.setAttribute('d', dBlue); pathBlue.setAttribute('stroke', '#007bff');
-            pathBlue.setAttribute('stroke-width', 5); pathBlue.setAttribute('fill', 'none');
-            group.appendChild(pathBlue);
-            const pathRed = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-            pathRed.setAttribute('d', dRed); pathRed.setAttribute('stroke', '#dc3545');
-            pathRed.setAttribute('stroke-width', 5); pathRed.setAttribute('fill', 'none');
-            group.appendChild(pathRed);
-        
-            createLabel(group, centerX-amp-18, y0, "5'");
-            createLabel(group, centerX-amp-18, y0+h, "3'");
-            createLabel(group, centerX+amp+18, y0, "3'");
-            createLabel(group, centerX+amp+18, y0+h, "5'");
-        
-            const seq = ['A','T','G','C','G','T','A','C','A','G'];
-            const ySpacing = h/(seq.length+1);
-            let bases1=[], bases2=[], hBonds=[];
-            for (let i=0; i<seq.length; i++) {
-                const yb = y0 + (i+1)*ySpacing;
-                const x1 = centerX - amp * Math.cos(freq*(yb-y0));
-                const x2 = centerX + amp * Math.cos(freq*(yb-y0));
-                let color1, color2, b1, b2;
-                if (seq[i] === 'A') { color1="#F08080"; color2="#F5D67D"; b1='A'; b2='T'; }
-                if (seq[i] === 'T') { color1="#F5D67D"; color2="#F08080"; b1='T'; b2='A'; }
-                if (seq[i] === 'G') { color1="#58D68D"; color2="#5DADE2"; b1='G'; b2='C'; }
-                if (seq[i] === 'C') { color1="#5DADE2"; color2="#58D68D"; b1='C'; b2='G'; }
-                // Strand 1 base
-                const rect1 = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-                rect1.setAttribute('x', x1-8); rect1.setAttribute('y', yb-5); rect1.setAttribute('width', 16); rect1.setAttribute('height', 10);
-                rect1.setAttribute('fill', color1); rect1.setAttribute('rx', 2);
-                group.appendChild(rect1);
-                bases1.push({element:rect1, x:x1, y:yb, type:b1});
-                createLabel(group, x1, yb+3, b1);
-                // Strand 2 base
-                const rect2 = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-                rect2.setAttribute('x', x2-8); rect2.setAttribute('y', yb-5); rect2.setAttribute('width', 16); rect2.setAttribute('height', 10);
-                rect2.setAttribute('fill', color2); rect2.setAttribute('rx', 2);
-                group.appendChild(rect2);
-                bases2.push({element:rect2, x:x2, y:yb, type:b2});
-                createLabel(group, x2, yb+3, b2);
-        
-                // H bond
-                const bond = document.createElementNS("http://www.w3.org/2000/svg", 'line');
-                bond.setAttribute('x1', x1+8); bond.setAttribute('y1', yb);
-                bond.setAttribute('x2', x2-8); bond.setAttribute('y2', yb);
-                bond.setAttribute('stroke', '#BDC3C7'); bond.setAttribute('stroke-width', 2);
-                group.appendChild(bond);
-                hBonds.push(bond);
-            }
-            return {group, pathBlue, pathRed, bases1, bases2, hBonds, amp, freq, y0, h, centerX, ySpacing};
-        }
-        
-        function setAnimationStep(step) {
-            // Hide all molecules and overlays by default
-            gsap.set("#nm-molecule", {opacity: 0, x: 0, y: 0, scale: 1});
-            gsap.set("#aziridinium-ion", {opacity: 0, x: 0, y: 0, scale: 1});
-            gsap.set("#cross-link-formation", {opacity: 0});
-            gsap.set("#cross-link-line", {opacity: 0}); // Hide the line unless needed
-        
-            // Reset base colors and positions
-            gsap.set(nmDna.bases1.map(b=>b.element), {fill: null, y: 0});
-            gsap.set(nmDna.bases2.map(b=>b.element), {fill: null, y: 0});
-            gsap.set(nmDna.hBonds, {opacity: 1});
-            gsap.set([nmDna.pathBlue, nmDna.pathRed], {clearProps: 'all'});
-        
-            g1 = nmDna.bases1.find(b => b.type === 'G');
-            g2 = nmDna.bases2.slice().reverse().find(b => b.type === 'G');
-            g1x = g1.x + 8; g1y = g1.y;
-            g2x = g2.x - 8; g2y = g2.y;
-        
-            // --- After any DNA update, always bring molecule overlays to top ---
-            bringMoleculesToFront();
-        
-            switch (step) {
-                case 0:
-                    // No molecules present
-                    break;
-                case 1:
-                    gsap.set("#nm-molecule", {
-                        opacity: 1, x: g1x - 400, y: g1y - 280, scale: 0.8
-                    });
-                    break;
-                case 2:
-                    gsap.set("#aziridinium-ion", {
-                        opacity: 1, x: g1x - 400, y: g1y - 280, scale: 1
-                    });
-                    break;
-                case 3:
-                    gsap.set("#aziridinium-ion", {opacity: 0});
-                    gsap.set(g1.element, {fill: "#8A2BE2"});
-                    break;
-                case 4:
-                    gsap.set("#nm-molecule", {
-                        opacity: 1, x: g2x - 400, y: g2y - 280, scale: 0.8
-                    });
-                    gsap.set("#cross-link-formation", {opacity: 1});
-                    gsap.set("#cross-link-line", {
-                        opacity: 1,
-                        attr: {x1: g1x, y1: g1y, x2: g2x, y2: g2y}, stroke: '#8A2BE2', 'stroke-width': 5
-                    });
-                    gsap.set(g1.element, {fill: "#8A2BE2"});
-                    break;
-                case 5:
-                    // DNA is distorted, cross-link is present
-                    let dBlue = '', dRed = '';
-                    for (let y = nmDna.y0; y <= nmDna.y0 + nmDna.h; y += 2) {
-                        let bend = 0;
-                        if (y > g1y-24 && y < g2y+24) bend = -20 * Math.sin((y-g1y)/30);
-                        const x1 = nmDna.centerX - nmDna.amp * Math.cos(nmDna.freq * (y-nmDna.y0)) + bend;
-                        const x2 = nmDna.centerX + nmDna.amp * Math.cos(nmDna.freq * (y-nmDna.y0)) - bend;
-                        if (y === nmDna.y0) { dBlue += `M${x1},${y}`; dRed += `M${x2},${y}`; }
-                        else { dBlue += ` L${x1},${y}`; dRed += ` L${x2},${y}`; }
-                    }
-                    nmDna.pathBlue.setAttribute('d', dBlue);
-                    nmDna.pathRed.setAttribute('d', dRed);
-                    gsap.set("#cross-link-formation", {opacity: 1});
-                    gsap.set("#cross-link-line", {
-                        opacity: 1,
-                        attr: {x1: g1x, y1: g1y, x2: g2x, y2: g2y},
-                        stroke: 'red', 'stroke-width': 8
-                    });
-                    gsap.set(g1.element, {fill: "#8A2BE2", y: g1.y - 6});
-                    gsap.set(g2.element, {fill: "#8A2BE2", y: g2.y - 6});
-                    gsap.set(nmDna.hBonds, {opacity: 0});
-                    break;
-            }
-            document.getElementById('nm-step-title').innerText = nmStepData[step].title;
-            document.getElementById('nm-explanation').innerText = nmStepData[step].content;
-            document.getElementById('nm-prev-btn').disabled = (step === 0);
-            document.getElementById('nm-next-btn').disabled = (step === nmMaxSteps - 1);
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-        
-            const sidebar = document.querySelector(".sidebar");
-            const sidebarToggle = document.querySelector('.sidebar-toggle');
-            const navLinks = document.querySelectorAll(".nav-links > li > a");
-            const hasSubmenuItems = document.querySelectorAll('.has-submenu');
-            const subLinks = document.querySelectorAll('.sub-links a');
-        
-            // Sidebar toggle logic
-            if (sidebarToggle && sidebar) {
-                sidebarToggle.addEventListener('click', function () {
-                    sidebar.classList.toggle('active');
-                    localStorage.setItem('sidebarExpanded', sidebar.classList.contains('active'));
-                });
-        
-                // Restore state
-                if (localStorage.getItem('sidebarExpanded') === 'true') {
-                    sidebar.classList.add('active');
-                }
-            }
-        
-            // Submenu toggle
-            hasSubmenuItems.forEach(item => {
-                const link = item.querySelector('a');
-                if (link) {
-                    link.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        item.classList.toggle('active');
-                    });
-                }
-            });
-        
-            // Close sidebar when a submenu link is clicked
-            subLinks.forEach(subLink => {
-                subLink.addEventListener('click', () => {
-                    sidebar.classList.remove("active");
-                    localStorage.setItem('sidebarExpanded', 'false');
-                });
-            });
-        
-            // Close sidebar when a top-level (non-submenu) link is clicked
-            navLinks.forEach(link => {
-                link.addEventListener("click", () => {
-                    if (!link.parentElement.classList.contains('has-submenu')) {
-                        sidebar.classList.remove("active");
-                        localStorage.setItem('sidebarExpanded', 'false');
-                    }
-                });
-            });
-        
-            initNitrogenMustardAnimation();
-            document.getElementById('nm-prev-btn').onclick = function() {
-                if (nmCurrentStep > 0) {
-                    nmCurrentStep--;
-                    setAnimationStep(nmCurrentStep);
-                }
-            };
-            document.getElementById('nm-next-btn').onclick = function() {
-                if (nmCurrentStep < nmMaxSteps-1) {
-                    nmCurrentStep++;
-                    setAnimationStep(nmCurrentStep);
-                }
-            };
-            document.getElementById('nm-restart-btn').onclick = function() {
-                nmCurrentStep = 0;
-                setAnimationStep(nmCurrentStep);
-            };
-        });
-        </script>
+    };
+    document.getElementById('nm-restart-btn').onclick = function() {
+        nmCurrentStep = 0;
+        setAnimationStep(nmCurrentStep);
+    };
+});
+</script>
